@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="300dp">
+
+            <ImageView
+                android:id="@+id/detailImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:background="#EEEEEE" />
+
+            <ImageButton
+                android:id="@+id/btnFavorite"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="end|top"
+                android:layout_margin="16dp"
+                android:background="@android:color/transparent"
+                android:src="@android:drawable/btn_star_big_off"
+                app:tint="@color/accent_orange"
+                android:contentDescription="Любими" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/detailName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Име на хотела"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_blue" />
+
+            <TextView
+                android:id="@+id/detailDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="Описанието ще се зареди тук..."
+                android:textSize="16sp"
+                android:lineSpacingExtra="4dp"
+                android:textColor="@color/black" />
+
+            <org.osmdroid.views.MapView
+                android:id="@+id/map"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:layout_marginTop="15dp" />
+
+            <Button
+                android:id="@+id/btnViewAR"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Виж в добавена реалност (AR)"
+                android:backgroundTint="#673AB7"
+                app:icon="@android:drawable/ic_menu_camera" />
+
+            <Button
+                android:id="@+id/btnBookNow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:text="Резервирай сега"
+                android:backgroundTint="@color/accent_orange"
+                android:padding="15dp" />
+
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
