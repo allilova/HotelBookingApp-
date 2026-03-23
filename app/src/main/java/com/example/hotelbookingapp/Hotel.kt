@@ -1,6 +1,6 @@
 package com.example.hotelbookingapp
 
-data class Hotel (
+data class Hotel(
     val id: Int,
     val name: String,
     val city: String,

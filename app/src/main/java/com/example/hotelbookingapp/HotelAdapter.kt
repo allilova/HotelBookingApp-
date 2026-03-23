@@ -1,5 +1,6 @@
 package com.example.hotelbookingapp
 
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,7 +9,6 @@ import android.widget.RatingBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-
 
 class HotelAdapter(private var hotels: List<Hotel>) :
     RecyclerView.Adapter<HotelAdapter.HotelViewHolder>() {
@@ -42,15 +42,17 @@ class HotelAdapter(private var hotels: List<Hotel>) :
 
         holder.itemView.setOnClickListener {
             val context = holder.itemView.context
-            val intent = android.content.Intent(context, HotelDetailActivity::class.java).apply {
+            val intent = Intent(context, HotelDetailActivity::class.java).apply {
                 putExtra("HOTEL_NAME", hotel.name)
+                putExtra("HOTEL_CITY", hotel.city)
                 putExtra("HOTEL_DESC", hotel.description)
                 putExtra("HOTEL_IMAGE", hotel.imageUrl)
+                putExtra("HOTEL_LAT", hotel.latitude)
+                putExtra("HOTEL_LON", hotel.longitude)
             }
             context.startActivity(intent)
         }
     }
-
 
     fun filterList(filteredList: List<Hotel>) {
         this.hotels = filteredList
