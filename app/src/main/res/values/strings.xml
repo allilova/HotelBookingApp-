@@ -1,3 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">HotelBookingApp</string>
+
+
+    <string name="find_hotel">Намери хотел</string>
+    <string name="bonus_points">Бонус точки: %d</string>
+    <string name="search_hint">Търси по град или име…</string>
+    <string name="sort_price_asc">Цена ↑</string>
+    <string name="sort_price_desc">Цена ↓</string>
+    <string name="sort_rating">Рейтинг ↓</string>
+    <string name="no_hotels_found">Няма намерени хотели.</string>
+    <string name="cd_favorites">Любими</string>
+    <string name="cd_bookings">История на резервации</string>
+    <string name="vip_toast">Ти си VIP клиент! 15%% отстъпка!</string>
+
+
+    <string name="price_per_night">%.2f евро / нощ</string>
+    <string name="available">✓ Свободен</string>
+    <string name="unavailable">✗ Зает</string>
+    <string name="pick_dates">Избери дати</string>
+    <string name="date_picker_title">Избери дати</string>
+    <string name="selected_dates">Настаняване: %1$s  →  Напускане: %2$s</string>
+    <string name="view_ar">Виж в добавена реалност (AR)</string>
+    <string name="book_now">Резервирай сега</string>
+    <string name="pick_dates_first">Моля, избери дати преди резервация.</string>
+    <string name="booking_sent">Резервацията за %1$s е изпратена! (%2$d нощ/и)</string>
+    <string name="cd_favorite_toggle">Любими</string>
+
+
+    <string name="title_favorites">Любими хотели</string>
+    <string name="no_favorites">Нямате добавени любими хотели.</string>
+
+
+    <string name="title_bookings">История на резервации</string>
+    <string name="no_bookings">Нямате направени резервации.</string>
+    <string name="nights_total">%1$d нощ/и — %.2f лв.</string>
+    <string name="booked_at">Резервирано: %s</string>
+
+
+    <string name="notif_channel_name">Booking Notifications</string>
+    <string name="notif_title">Успешна резервация!</string>
+    <string name="notif_text">%1$s — %2$d нощ/и — %.2f лв.</string>
+    <string name="camera_permission_denied">Камерата изисква разрешение.</string>
+    <string name="camera_start_failed">Камерата не може да се стартира: %s</string>
+    <string name="distance_label">Разстояние: 0.5 км</string>
+
+
+    <string name="splash_tagline">Намери своя перфектен престой</string>
 </resources>

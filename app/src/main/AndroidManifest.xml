@@ -10,7 +10,6 @@
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
-
     <uses-permission android:name="android.permission.CAMERA" />
 
     <application
@@ -21,28 +20,42 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.HotelBookingApp">
+        android:theme="@style/Theme.HotelBookingApp"
+        android:localeConfig="@xml/locales_config">
+
+        <!-- ── Splash (LAUNCHER) ── -->
         <activity
-            android:name=".ARViewActivity"
-            android:exported="false" />
-        <activity
-            android:name=".HotelDetailActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.HotelBookingApp.Splash"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".HotelDetailActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ARViewActivity"
+            android:exported="false" />
+
         <activity
             android:name=".FavoritesActivity"
             android:exported="false" />
+
         <activity
-                  android:name=".BookingHistoryActivity"
-                  android:exported="false" />
+            android:name=".BookingHistoryActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>
