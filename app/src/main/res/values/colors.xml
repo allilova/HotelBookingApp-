@@ -10,4 +10,8 @@
     <color name="white">#FFFFFFFF</color>
     <color name="gray_bg">#F5F5F5</color>
     <color name="text_secondary">#757575</color>
+
+
+    <color name="teal_available">#00897B</color>
+    <color name="red_unavailable">#E53935</color>
 </resources>

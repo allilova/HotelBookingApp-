@@ -1,23 +1,30 @@
 package com.example.hotelbookingapp
 
-import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RatingBar
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 
-class HotelAdapter(private var hotels: List<Hotel>) :
-    RecyclerView.Adapter<HotelAdapter.HotelViewHolder>() {
+class HotelAdapter(
+    private val onClick: (Hotel, ImageView) -> Unit
+) : ListAdapter<Hotel, HotelAdapter.HotelViewHolder>(DiffCallback) {
+
+    companion object DiffCallback : DiffUtil.ItemCallback<Hotel>() {
+        override fun areItemsTheSame(a: Hotel, b: Hotel) = a.id == b.id
+        override fun areContentsTheSame(a: Hotel, b: Hotel) = a == b
+    }
 
     class HotelViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val imgHotel: ImageView = view.findViewById(R.id.hotelImage)
-        val tvName: TextView = view.findViewById(R.id.hotelName)
-        val tvCity: TextView = view.findViewById(R.id.hotelCity)
-        val tvPrice: TextView = view.findViewById(R.id.hotelPrice)
+        val tvName: TextView    = view.findViewById(R.id.hotelName)
+        val tvCity: TextView    = view.findViewById(R.id.hotelCity)
+        val tvPrice: TextView   = view.findViewById(R.id.hotelPrice)
         val rbRating: RatingBar = view.findViewById(R.id.hotelRating)
     }
 
@@ -28,11 +35,14 @@ class HotelAdapter(private var hotels: List<Hotel>) :
     }
 
     override fun onBindViewHolder(holder: HotelViewHolder, position: Int) {
-        val hotel = hotels[position]
-        holder.tvName.text = hotel.name
-        holder.tvCity.text = hotel.city
-        holder.tvPrice.text = "${hotel.price} лв."
+        val hotel = getItem(position)
+        holder.tvName.text  = hotel.name
+        holder.tvCity.text  = hotel.city
+        holder.tvPrice.text = "${hotel.price} лв. / нощ"
         holder.rbRating.rating = hotel.rating
+
+
+        holder.imgHotel.transitionName = "hotelImageTransition_${hotel.id}"
 
         Glide.with(holder.itemView.context)
             .load(hotel.imageUrl)
@@ -41,23 +51,7 @@ class HotelAdapter(private var hotels: List<Hotel>) :
             .into(holder.imgHotel)
 
         holder.itemView.setOnClickListener {
-            val context = holder.itemView.context
-            val intent = Intent(context, HotelDetailActivity::class.java).apply {
-                putExtra("HOTEL_NAME", hotel.name)
-                putExtra("HOTEL_CITY", hotel.city)
-                putExtra("HOTEL_DESC", hotel.description)
-                putExtra("HOTEL_IMAGE", hotel.imageUrl)
-                putExtra("HOTEL_LAT", hotel.latitude)
-                putExtra("HOTEL_LON", hotel.longitude)
-            }
-            context.startActivity(intent)
+            onClick(hotel, holder.imgHotel)
         }
     }
-
-    fun filterList(filteredList: List<Hotel>) {
-        this.hotels = filteredList
-        notifyDataSetChanged()
-    }
-
-    override fun getItemCount() = hotels.size
 }
