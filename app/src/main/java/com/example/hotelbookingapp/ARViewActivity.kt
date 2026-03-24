@@ -26,40 +26,50 @@ class ARViewActivity : AppCompatActivity() {
         val hotelName = intent.getStringExtra("HOTEL_NAME") ?: ""
         findViewById<TextView>(R.id.arHotelName).text = hotelName
 
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED
         ) {
             startCamera()
         } else {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA)
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.CAMERA),
+                REQUEST_CAMERA
+            )
         }
     }
 
     private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        val cameraProviderFuture = try {
+            ProcessCameraProvider.getInstance(this)
+        } catch (e: Exception) {
+            Toast.makeText(
+                this,
+                getString(R.string.camera_start_failed, e.message),
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
 
         cameraProviderFuture.addListener({
             try {
                 val cameraProvider = cameraProviderFuture.get()
 
+                val previewView = findViewById<PreviewView>(R.id.viewFinder)
                 val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(
-                        findViewById<PreviewView>(R.id.viewFinder).surfaceProvider
-                    )
+                    it.setSurfaceProvider(previewView.surfaceProvider)
                 }
 
-
-                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview)
-
+                cameraProvider.bindToLifecycle(
+                    this,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview
+                )
             } catch (e: Exception) {
                 Toast.makeText(
                     this,
-                    "Камерата не може да се стартира: ${e.message}",
+                    getString(R.string.camera_start_failed, e.message),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -72,13 +82,16 @@ class ARViewActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CAMERA &&
-            grantResults.isNotEmpty() &&
-            grantResults[0] == PackageManager.PERMISSION_GRANTED
-        ) {
-            startCamera()
-        } else {
-            Toast.makeText(this, "Камерата изисква разрешение.", Toast.LENGTH_SHORT).show()
+        when {
+            requestCode == REQUEST_CAMERA &&
+                    grantResults.isNotEmpty() &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED -> startCamera()
+
+            else -> Toast.makeText(
+                this,
+                getString(R.string.camera_permission_denied),
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 }

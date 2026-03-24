@@ -34,17 +34,23 @@ class HotelDetailActivity : AppCompatActivity() {
     private val viewModel: HotelDetailViewModel by viewModels()
     private val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-    private var checkInMs: Long? = null
+    private var checkInMs: Long?  = null
     private var checkOutMs: Long? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Configuration.getInstance().load(this, getSharedPreferences("osm_pref", Context.MODE_PRIVATE))
-        setContentView(R.layout.activity_hotel_detail)
+        try {
+            Configuration.getInstance()
+                .load(this, getSharedPreferences("osm_pref", Context.MODE_PRIVATE))
+        } catch (e: Exception) {
+            Toast.makeText(this, getString(R.string.error_map_config), Toast.LENGTH_SHORT).show()
+        }
 
+        setContentView(R.layout.activity_hotel_detail)
         supportPostponeEnterTransition()
 
+        // ── Intent extras ────────────────────────────────────────────────────
         val name      = intent.getStringExtra("HOTEL_NAME")      ?: "Хотел"
         val city      = intent.getStringExtra("HOTEL_CITY")      ?: ""
         val desc      = intent.getStringExtra("HOTEL_DESC")      ?: ""
@@ -55,6 +61,7 @@ class HotelDetailActivity : AppCompatActivity() {
         val rating    = intent.getFloatExtra("HOTEL_RATING",     0f)
         val available = intent.getBooleanExtra("HOTEL_AVAILABLE", true)
 
+        // ── View references ──────────────────────────────────────────────────
         val detailImage    = findViewById<ImageView>(R.id.detailImage)
         val detailName     = findViewById<TextView>(R.id.detailName)
         val detailDesc     = findViewById<TextView>(R.id.detailDescription)
@@ -69,7 +76,7 @@ class HotelDetailActivity : AppCompatActivity() {
 
         detailImage.transitionName = "hotelImageTransition"
 
-
+        // ── Image ────────────────────────────────────────────────────────────
         Glide.with(this)
             .load(imageUrl)
             .centerCrop()
@@ -80,6 +87,11 @@ class HotelDetailActivity : AppCompatActivity() {
                     target: Target<Drawable>, isFirstResource: Boolean
                 ): Boolean {
                     supportStartPostponedEnterTransition()
+                    Toast.makeText(
+                        this@HotelDetailActivity,
+                        getString(R.string.error_image_load),
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return false
                 }
                 override fun onResourceReady(
@@ -93,49 +105,50 @@ class HotelDetailActivity : AppCompatActivity() {
             })
             .into(detailImage)
 
+        // ── Basic UI ─────────────────────────────────────────────────────────
         detailName.text = name
         detailDesc.text = desc
         tvPrice.text    = "%.2f лв. / нощ".format(price)
         rbRating.rating = rating
         tvAvailability.text = if (available) "✓ Свободен" else "✗ Зает"
         tvAvailability.setTextColor(
-            if (available) getColor(R.color.teal_available) else getColor(R.color.red_unavailable)
+            if (available) getColor(R.color.teal_available)
+            else           getColor(R.color.red_unavailable)
         )
 
+        // ── Map ──────────────────────────────────────────────────────────────
+        setupMap(lat, lon, name)
 
-        val map = findViewById<org.osmdroid.views.MapView>(R.id.map)
-        map.setMultiTouchControls(true)
-        val location = GeoPoint(lat, lon)
-        map.controller.setZoom(15.0)
-        map.controller.setCenter(location)
-        Marker(map).apply {
-            position = location
-            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-            title = name
-            map.overlays.add(this)
-        }
-
-
+        // ── Date picker ──────────────────────────────────────────────────────
         btnPickDates.setOnClickListener {
-            val constraints = CalendarConstraints.Builder()
-                .setValidator(DateValidatorPointForward.now())
-                .build()
-            val picker = MaterialDatePicker.Builder.dateRangePicker()
-                .setTitleText("Избери дати")
-                .setCalendarConstraints(constraints)
-                .build()
-            picker.addOnPositiveButtonClickListener { selection ->
-                checkInMs  = selection.first
-                checkOutMs = selection.second
-                val inStr  = sdf.format(Date(checkInMs!!))
-                val outStr = sdf.format(Date(checkOutMs!!))
-                tvDates.text = "Настаняване: $inStr  →  Напускане: $outStr"
+            try {
+                val constraints = CalendarConstraints.Builder()
+                    .setValidator(DateValidatorPointForward.now())
+                    .build()
+                val picker = MaterialDatePicker.Builder.dateRangePicker()
+                    .setTitleText(getString(R.string.date_picker_title))
+                    .setCalendarConstraints(constraints)
+                    .build()
+                picker.addOnPositiveButtonClickListener { selection ->
+                    checkInMs  = selection.first
+                    checkOutMs = selection.second
+                    val inStr  = sdf.format(Date(checkInMs!!))
+                    val outStr = sdf.format(Date(checkOutMs!!))
+                    tvDates.text = getString(R.string.selected_dates, inStr, outStr)
+                }
+                picker.show(supportFragmentManager, "DATE_PICKER")
+            } catch (e: Exception) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_date_picker),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-            picker.show(supportFragmentManager, "DATE_PICKER")
         }
 
-
+        // ── Favourite ────────────────────────────────────────────────────────
         viewModel.loadFavouriteState(name.hashCode())
+
         lifecycleScope.launch {
             viewModel.isFavourite.collect { fav ->
                 btnFav.setImageResource(
@@ -144,18 +157,29 @@ class HotelDetailActivity : AppCompatActivity() {
                 )
             }
         }
+
         btnFav.setOnClickListener {
-            val fav = FavoriteHotel(id = name.hashCode(), name = name, city = city, imageUrl = imageUrl)
+            val fav = FavoriteHotel(
+                id       = name.hashCode(),
+                name     = name,
+                city     = city,
+                imageUrl = imageUrl
+            )
             viewModel.toggleFavourite(fav)
         }
 
-
+        // ── Booking ──────────────────────────────────────────────────────────
         btnBook.setOnClickListener {
             if (checkInMs == null || checkOutMs == null) {
-                Toast.makeText(this, "Моля, избери дати преди резервация.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.pick_dates_first),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
-            val nights = ((checkOutMs!! - checkInMs!!) / (1000 * 60 * 60 * 24)).coerceAtLeast(1)
+            val nights = ((checkOutMs!! - checkInMs!!) / (1000 * 60 * 60 * 24))
+                .coerceAtLeast(1)
             val booking = Booking(
                 hotelName     = name,
                 hotelCity     = city,
@@ -165,11 +189,36 @@ class HotelDetailActivity : AppCompatActivity() {
                 pricePerNight = price
             )
             viewModel.saveBooking(booking)
-            sendNotification(name, nights, price)
-            Toast.makeText(this, "Резервацията за $name е изпратена! ($nights нощ/и)", Toast.LENGTH_SHORT).show()
         }
 
+        // ── Observe booking result ───────────────────────────────────────────
+        lifecycleScope.launch {
+            viewModel.bookingSaved.collect { saved ->
+                if (saved) {
+                    val nights = ((checkOutMs!! - checkInMs!!) / (1000 * 60 * 60 * 24))
+                        .coerceAtLeast(1)
+                    sendNotification(name, nights, price)
+                    Toast.makeText(
+                        this@HotelDetailActivity,
+                        getString(R.string.booking_sent, name, nights),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
 
+        // ── Observe errors from ViewModel ────────────────────────────────────
+        lifecycleScope.launch {
+            viewModel.errorEvent.collect { message ->
+                Toast.makeText(
+                    this@HotelDetailActivity,
+                    message,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        // ── AR ───────────────────────────────────────────────────────────────
         btnAR.setOnClickListener {
             startActivity(
                 android.content.Intent(this, ARViewActivity::class.java)
@@ -178,28 +227,68 @@ class HotelDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun sendNotification(hotelName: String, nights: Long, price: Double) {
-        val channelId = "hotel_notifications"
-        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            nm.createNotificationChannel(
-                NotificationChannel(channelId, "Booking Notifications", NotificationManager.IMPORTANCE_DEFAULT)
-            )
-        }
-        val total = nights * price
-        val builder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Успешна резервация!")
-            .setContentText("$hotelName — $nights нощ/и — %.2f лв.".format(total))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
+    // ── Private helpers ──────────────────────────────────────────────────────
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
-            return
+    private fun setupMap(lat: Double, lon: Double, name: String) {
+        try {
+            val map = findViewById<org.osmdroid.views.MapView>(R.id.map)
+            map.setMultiTouchControls(true)
+            val location = GeoPoint(lat, lon)
+            map.controller.setZoom(15.0)
+            map.controller.setCenter(location)
+            Marker(map).apply {
+                position = location
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                title = name
+                map.overlays.add(this)
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, getString(R.string.error_map_load), Toast.LENGTH_SHORT).show()
         }
-        nm.notify(1, builder.build())
+    }
+
+    private fun sendNotification(hotelName: String, nights: Long, price: Double) {
+        try {
+            val channelId = "hotel_notifications"
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                nm.createNotificationChannel(
+                    NotificationChannel(
+                        channelId,
+                        getString(R.string.notif_channel_name),
+                        NotificationManager.IMPORTANCE_DEFAULT
+                    )
+                )
+            }
+
+            val total = nights * price
+            val builder = NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle(getString(R.string.notif_title))
+                .setContentText("$hotelName — $nights нощ/и — %.2f лв.".format(total))
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ActivityCompat.checkSelfPermission(
+                    this, Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    101
+                )
+                return
+            }
+            nm.notify(1, builder.build())
+        } catch (e: Exception) {
+            Toast.makeText(
+                this,
+                getString(R.string.error_notification),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 }

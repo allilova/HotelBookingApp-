@@ -15,7 +15,7 @@
     <string name="vip_toast">Ти си VIP клиент! 15%% отстъпка!</string>
 
 
-    <string name="price_per_night">%.2f евро / нощ</string>
+    <string name="price_per_night">%.2f лв. / нощ</string>
     <string name="available">✓ Свободен</string>
     <string name="unavailable">✗ Зает</string>
     <string name="pick_dates">Избери дати</string>
@@ -34,17 +34,31 @@
 
     <string name="title_bookings">История на резервации</string>
     <string name="no_bookings">Нямате направени резервации.</string>
-    <string name="nights_total">%1$d нощ/и — %.2f лв.</string>
+    <string name="nights_total" formatted="false">%1$d нощ/и — %.2f лв.</string>
     <string name="booked_at">Резервирано: %s</string>
 
 
     <string name="notif_channel_name">Booking Notifications</string>
     <string name="notif_title">Успешна резервация!</string>
-    <string name="notif_text">%1$s — %2$d нощ/и — %.2f лв.</string>
+    <string name="notif_text" formatted="false">%1$s — %2$d нощ/и — %.2f лв.</string>
+
+
     <string name="camera_permission_denied">Камерата изисква разрешение.</string>
     <string name="camera_start_failed">Камерата не може да се стартира: %s</string>
     <string name="distance_label">Разстояние: 0.5 км</string>
 
 
     <string name="splash_tagline">Намери своя перфектен престой</string>
+
+
+    <string name="error_loading_bookings">Грешка при зареждане на резервации.</string>
+    <string name="error_loading_favorites">Грешка при зареждане на любими.</string>
+    <string name="error_delete_favorite">Грешка при изтриване на любим хотел.</string>
+    <string name="error_map_config">Грешка при конфигуриране на картата.</string>
+    <string name="error_map_load">Картата не можа да се зареди.</string>
+    <string name="error_image_load">Изображението не можа да се зареди.</string>
+    <string name="error_date_picker">Грешка при отваряне на избор на дати.</string>
+    <string name="error_notification">Грешка при изпращане на известие.</string>
+    <string name="error_save_booking">Грешка при запазване на резервация.</string>
+    <string name="error_toggle_favorite">Грешка при обновяване на любими.</string>
 </resources>

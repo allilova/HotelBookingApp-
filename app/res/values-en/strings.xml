@@ -27,24 +27,36 @@
     <string name="booking_sent">Booking for %1$s sent! (%2$d night(s))</string>
     <string name="cd_favorite_toggle">Favourites</string>
 
-
     <string name="title_favorites">Favourite hotels</string>
     <string name="no_favorites">You have no favourite hotels yet.</string>
 
 
     <string name="title_bookings">Booking history</string>
     <string name="no_bookings">You have no bookings yet.</string>
-    <string name="nights_total">%1$d night(s) — %.2f BGN</string>
+    <string name="nights_total" formatted="false">%1$d night(s) — %.2f BGN</string>
     <string name="booked_at">Booked: %s</string>
 
 
     <string name="notif_channel_name">Booking Notifications</string>
     <string name="notif_title">Booking confirmed!</string>
-    <string name="notif_text">%1$s — %2$d night(s) — %.2f BGN</string>
+    <string name="notif_text" formatted="false">%1$s — %2$d night(s) — %.2f BGN</string>
+
+
     <string name="camera_permission_denied">Camera permission is required.</string>
     <string name="camera_start_failed">Camera could not start: %s</string>
     <string name="distance_label">Distance: 0.5 km</string>
 
 
     <string name="splash_tagline">Find your perfect stay</string>
+
+    <string name="error_loading_bookings">Failed to load bookings.</string>
+    <string name="error_loading_favorites">Failed to load favourites.</string>
+    <string name="error_delete_favorite">Failed to delete favourite hotel.</string>
+    <string name="error_map_config">Failed to configure the map.</string>
+    <string name="error_map_load">The map could not be loaded.</string>
+    <string name="error_image_load">The image could not be loaded.</string>
+    <string name="error_date_picker">Failed to open date picker.</string>
+    <string name="error_notification">Failed to send notification.</string>
+    <string name="error_save_booking">Failed to save booking.</string>
+    <string name="error_toggle_favorite">Failed to update favourites.</string>
 </resources>
