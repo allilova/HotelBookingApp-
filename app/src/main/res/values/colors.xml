@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary_blue">#1A237E</color>
-    <color name="primary_light">#534BAE</color>
-
-    <color name="accent_orange">#FF9800</color>
-    <color name="star_gold">#FFD700</color>
-
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="gray_bg">#F5F5F5</color>
-    <color name="text_secondary">#757575</color>
+    <!-- Primary blue lightened for dark backgrounds -->
+    <color name="primary_blue">#7986CB</color>
+    <color name="primary_light">#9FA8DA</color>
 
 
-    <color name="teal_available">#00897B</color>
-    <color name="red_unavailable">#E53935</color>
+    <color name="accent_orange">#FFB74D</color>
+    <color name="star_gold">#FFD54F</color>
+
+
+    <color name="black">#FFFFFFFF</color>
+    <color name="white">#FF121212</color>
+    <color name="gray_bg">#FF1E1E1E</color>
+    <color name="text_secondary">#FFBDBDBD</color>
+
+
+    <color name="teal_available">#4DB6AC</color>
+    <color name="red_unavailable">#EF9A9A</color>
 </resources>

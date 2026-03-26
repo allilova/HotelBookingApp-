@@ -1,17 +1,22 @@
 package com.example.hotelbookingapp
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
+import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
 
         val recyclerView = findViewById<RecyclerView>(R.id.rvHotels)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -53,6 +59,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+
         val searchView = findViewById<androidx.appcompat.widget.SearchView>(R.id.searchView)
         searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?) = false
@@ -61,6 +68,7 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
         })
+
 
         val chipGroup = findViewById<ChipGroup>(R.id.chipGroupSort)
         chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
@@ -73,13 +81,14 @@ class MainActivity : AppCompatActivity() {
             viewModel.onSortChanged(order)
         }
 
+
         val sharedPref = getSharedPreferences("HotelAppPrefs", android.content.Context.MODE_PRIVATE)
-        val points = sharedPref.getInt("user_points", 0) + 10
-        sharedPref.edit().putInt("user_points", points).apply()
+        val points = sharedPref.getInt("user_points", 0)
         findViewById<TextView>(R.id.tvPoints).text = getString(R.string.bonus_points, points)
         if (points >= 100) {
             android.widget.Toast.makeText(this, getString(R.string.vip_toast), android.widget.Toast.LENGTH_LONG).show()
         }
+
 
         findViewById<ImageButton>(R.id.btnGoToFavorites).setOnClickListener {
             startActivity(Intent(this, FavoritesActivity::class.java))
@@ -87,9 +96,46 @@ class MainActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.btnGoToBookings).setOnClickListener {
             startActivity(Intent(this, BookingHistoryActivity::class.java))
         }
-
         findViewById<ImageButton>(R.id.btnGoToProfile).setOnClickListener {
             startActivity(Intent(this, UserProfileActivity::class.java))
+        }
+
+
+        val btnDark = findViewById<ImageButton>(R.id.btnDarkMode)
+        btnDark.setOnClickListener {
+            val currentMode = AppCompatDelegate.getDefaultNightMode()
+            val newMode = if (currentMode == AppCompatDelegate.MODE_NIGHT_YES)
+                AppCompatDelegate.MODE_NIGHT_NO
+            else
+                AppCompatDelegate.MODE_NIGHT_YES
+            AppCompatDelegate.setDefaultNightMode(newMode)
+            sharedPref.edit().putInt("night_mode", newMode).apply()
+        }
+
+        val savedMode = sharedPref.getInt("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        AppCompatDelegate.setDefaultNightMode(savedMode)
+
+
+        val btnLang = findViewById<Button>(R.id.btnLanguage)
+        val currentLocale = getCurrentLocale()
+        btnLang.text = if (currentLocale.language == "bg") "EN" else "БГ"
+
+        btnLang.setOnClickListener {
+            val next = if (getCurrentLocale().language == "bg") "en" else "bg"
+            AppCompatDelegate.setApplicationLocales(
+                LocaleListCompat.forLanguageTags(next)
+            )
+
+        }
+    }
+
+
+    private fun getCurrentLocale(): Locale {
+        val appLocales = AppCompatDelegate.getApplicationLocales()
+        return if (!appLocales.isEmpty) {
+            appLocales[0] ?: resources.configuration.locales[0]
+        } else {
+            resources.configuration.locales[0]
         }
     }
 }

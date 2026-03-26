@@ -14,6 +14,7 @@
     <string name="cd_bookings">История на резервации</string>
     <string name="cd_profile">Профил</string>
     <string name="vip_toast">Ти си VIP клиент! 15%% отстъпка!</string>
+    <string name="cd_toggle_theme">Превключи тема</string>
 
 
     <string name="price_per_night">%.2f лв. / нощ</string>

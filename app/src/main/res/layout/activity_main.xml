@@ -17,6 +17,31 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <!-- Language toggle (BG / EN) -->
+    <Button
+        android:id="@+id/btnLanguage"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="EN"
+        android:textSize="13sp"
+        android:textColor="@color/primary_blue"
+        app:layout_constraintTop_toTopOf="@id/tvHeader"
+        app:layout_constraintBottom_toBottomOf="@id/tvHeader"
+        app:layout_constraintEnd_toStartOf="@id/btnDarkMode" />
+
+    <!-- Dark / Light mode toggle -->
+    <ImageButton
+        android:id="@+id/btnDarkMode"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_compass"
+        android:contentDescription="@string/cd_toggle_theme"
+        app:tint="@color/primary_blue"
+        app:layout_constraintTop_toTopOf="@id/tvHeader"
+        app:layout_constraintBottom_toBottomOf="@id/tvHeader"
+        app:layout_constraintEnd_toStartOf="@id/btnGoToFavorites" />
 
     <ImageButton
         android:id="@+id/btnGoToFavorites"
@@ -31,7 +56,6 @@
         app:layout_constraintBottom_toBottomOf="@id/tvHeader"
         app:layout_constraintEnd_toStartOf="@id/btnGoToBookings" />
 
-
     <ImageButton
         android:id="@+id/btnGoToBookings"
         android:layout_width="48dp"
@@ -44,7 +68,6 @@
         app:layout_constraintTop_toTopOf="@id/tvHeader"
         app:layout_constraintBottom_toBottomOf="@id/tvHeader"
         app:layout_constraintEnd_toStartOf="@id/btnGoToProfile" />
-
 
     <ImageButton
         android:id="@+id/btnGoToProfile"
@@ -76,7 +99,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:background="@android:color/white"
+        android:background="@android:color/transparent"
         app:iconifiedByDefault="false"
         app:queryHint="@string/search_hint"
         app:layout_constraintTop_toBottomOf="@id/tvPoints"

@@ -13,6 +13,7 @@
     <string name="cd_bookings">Booking history</string>
     <string name="cd_profile">Profile</string>
     <string name="vip_toast">You are a VIP client! 15%% discount!</string>
+    <string name="cd_toggle_theme">Toggle theme</string>
 
     <string name="price_per_night">%.2f BGN / night</string>
     <string name="available">✓ Available</string>
