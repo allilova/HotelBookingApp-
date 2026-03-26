@@ -45,7 +45,6 @@ class MainActivity : AppCompatActivity() {
 
         val tvEmpty = findViewById<TextView>(R.id.tvEmptySearch)
 
-
         lifecycleScope.launch {
             viewModel.uiState.collect { state ->
                 adapter.submitList(state.hotels)
@@ -53,7 +52,6 @@ class MainActivity : AppCompatActivity() {
                 recyclerView.isVisible = !state.isEmpty
             }
         }
-
 
         val searchView = findViewById<androidx.appcompat.widget.SearchView>(R.id.searchView)
         searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
@@ -63,7 +61,6 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
         })
-
 
         val chipGroup = findViewById<ChipGroup>(R.id.chipGroupSort)
         chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
@@ -76,21 +73,23 @@ class MainActivity : AppCompatActivity() {
             viewModel.onSortChanged(order)
         }
 
-
         val sharedPref = getSharedPreferences("HotelAppPrefs", android.content.Context.MODE_PRIVATE)
         val points = sharedPref.getInt("user_points", 0) + 10
         sharedPref.edit().putInt("user_points", points).apply()
-        findViewById<TextView>(R.id.tvPoints).text = "Бонус точки: $points"
+        findViewById<TextView>(R.id.tvPoints).text = getString(R.string.bonus_points, points)
         if (points >= 100) {
-            android.widget.Toast.makeText(this, "Ти си VIP клиент! 15% отстъпка!", android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(this, getString(R.string.vip_toast), android.widget.Toast.LENGTH_LONG).show()
         }
-
 
         findViewById<ImageButton>(R.id.btnGoToFavorites).setOnClickListener {
             startActivity(Intent(this, FavoritesActivity::class.java))
         }
         findViewById<ImageButton>(R.id.btnGoToBookings).setOnClickListener {
             startActivity(Intent(this, BookingHistoryActivity::class.java))
+        }
+
+        findViewById<ImageButton>(R.id.btnGoToProfile).setOnClickListener {
+            startActivity(Intent(this, UserProfileActivity::class.java))
         }
     }
 }

@@ -12,6 +12,7 @@
     <string name="no_hotels_found">Няма намерени хотели.</string>
     <string name="cd_favorites">Любими</string>
     <string name="cd_bookings">История на резервации</string>
+    <string name="cd_profile">Профил</string>
     <string name="vip_toast">Ти си VIP клиент! 15%% отстъпка!</string>
 
 
@@ -49,6 +50,23 @@
 
 
     <string name="splash_tagline">Намери своя перфектен престой</string>
+
+
+    <string name="login_title">Добре дошъл!</string>
+    <string name="login_subtitle">Влез в своя акаунт</string>
+    <string name="register_title">Създай акаунт</string>
+    <string name="hint_email">Имейл адрес</string>
+    <string name="hint_password">Парола</string>
+    <string name="hint_confirm_password">Потвърди парола</string>
+    <string name="hint_full_name">Пълно име</string>
+    <string name="btn_login">Вход</string>
+    <string name="btn_register">Регистрация</string>
+    <string name="btn_logout">Изход от акаунта</string>
+    <string name="go_to_register">Нямаш акаунт? Регистрирай се</string>
+    <string name="go_to_login">Вече имаш акаунт? Влез</string>
+
+
+    <string name="profile_joined">Регистриран на: %s</string>
 
 
     <string name="error_loading_bookings">Грешка при зареждане на резервации.</string>

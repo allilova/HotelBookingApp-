@@ -1,6 +1,7 @@
 package com.example.hotelbookingapp
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.animation.AnimationUtils
@@ -10,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
 
 @SuppressLint("CustomSplashScreen")
 class SplashActivity : AppCompatActivity() {
@@ -23,7 +23,6 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
-
         val fadeIn = AnimationUtils.loadAnimation(this, android.R.anim.fade_in)
         fadeIn.duration = 800
         findViewById<ImageView>(R.id.splashIcon).startAnimation(fadeIn)
@@ -32,7 +31,10 @@ class SplashActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             delay(SPLASH_DELAY_MS)
-            startActivity(Intent(this@SplashActivity, MainActivity::class.java))
+            val pref = getSharedPreferences("HotelAppPrefs", Context.MODE_PRIVATE)
+            val loggedIn = pref.getInt("logged_in_user_id", -1) != -1
+            val target = if (loggedIn) MainActivity::class.java else LoginActivity::class.java
+            startActivity(Intent(this@SplashActivity, target))
             finish()
         }
     }

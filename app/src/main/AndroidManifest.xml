@@ -23,7 +23,7 @@
         android:theme="@style/Theme.HotelBookingApp"
         android:localeConfig="@xml/locales_config">
 
-        <!-- ── Splash (LAUNCHER) ── -->
+
         <activity
             android:name=".SplashActivity"
             android:exported="true"
@@ -35,6 +35,19 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".UserProfileActivity"
+            android:exported="false" />
 
         <activity
             android:name=".MainActivity"

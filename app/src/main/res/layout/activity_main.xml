@@ -10,7 +10,7 @@
         android:id="@+id/tvHeader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Намери хотел"
+        android:text="@string/find_hotel"
         android:textSize="24sp"
         android:textStyle="bold"
         android:layout_margin="16dp"
@@ -22,10 +22,10 @@
         android:id="@+id/btnGoToFavorites"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="4dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@android:drawable/btn_star_big_on"
-        android:contentDescription="Любими"
+        android:contentDescription="@string/cd_favorites"
         app:tint="@color/accent_orange"
         app:layout_constraintTop_toTopOf="@id/tvHeader"
         app:layout_constraintBottom_toBottomOf="@id/tvHeader"
@@ -36,10 +36,24 @@
         android:id="@+id/btnGoToBookings"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="4dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@android:drawable/ic_menu_agenda"
-        android:contentDescription="История на резервации"
+        android:contentDescription="@string/cd_bookings"
+        app:tint="@color/primary_blue"
+        app:layout_constraintTop_toTopOf="@id/tvHeader"
+        app:layout_constraintBottom_toBottomOf="@id/tvHeader"
+        app:layout_constraintEnd_toStartOf="@id/btnGoToProfile" />
+
+
+    <ImageButton
+        android:id="@+id/btnGoToProfile"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="16dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_myplaces"
+        android:contentDescription="@string/cd_profile"
         app:tint="@color/primary_blue"
         app:layout_constraintTop_toTopOf="@id/tvHeader"
         app:layout_constraintBottom_toBottomOf="@id/tvHeader"
@@ -49,7 +63,7 @@
         android:id="@+id/tvPoints"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Бонус точки: 0"
+        android:text="@string/bonus_points"
         android:textColor="@color/accent_orange"
         android:textStyle="bold"
         android:layout_marginStart="16dp"
@@ -64,11 +78,10 @@
         android:layout_margin="10dp"
         android:background="@android:color/white"
         app:iconifiedByDefault="false"
-        app:queryHint="Търси по град или име..."
+        app:queryHint="@string/search_hint"
         app:layout_constraintTop_toBottomOf="@id/tvPoints"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
-
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/chipGroupSort"
@@ -85,29 +98,28 @@
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Цена ↑" />
+            android:text="@string/sort_price_asc" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipPriceDesc"
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Цена ↓" />
+            android:text="@string/sort_price_desc" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipRating"
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Рейтинг ↓" />
+            android:text="@string/sort_rating" />
     </com.google.android.material.chip.ChipGroup>
-
 
     <TextView
         android:id="@+id/tvEmptySearch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Няма намерени хотели."
+        android:text="@string/no_hotels_found"
         android:textSize="16sp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/chipGroupSort"
