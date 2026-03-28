@@ -28,7 +28,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Разстояние: 0.5 км"
+            android:text="@string/distance_label"
             android:textColor="@color/accent_orange" />
     </LinearLayout>
 

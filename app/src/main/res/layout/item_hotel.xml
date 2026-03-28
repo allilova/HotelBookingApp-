@@ -30,7 +30,6 @@
                 android:id="@+id/hotelName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Име на хотела"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@color/black" />
@@ -39,7 +38,6 @@
                 android:id="@+id/hotelCity"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Град"
                 android:textColor="#757575" />
 
             <RatingBar
@@ -57,7 +55,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:text="0.00 лв."
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@color/primary_blue" />

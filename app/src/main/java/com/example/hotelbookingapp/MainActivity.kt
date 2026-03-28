@@ -24,7 +24,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
         viewModel.setResourceContext(this)
 
         val sharedPref = getSharedPreferences("HotelAppPrefs", android.content.Context.MODE_PRIVATE)
@@ -43,16 +42,17 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         val adapter = HotelAdapter { hotel, sharedImageView ->
+            // Pass only the hotel ID and non-translatable fields.
+            // HotelDetailActivity resolves name/city/description itself using its
+            // own context, so it always shows the currently active locale.
             val intent = Intent(this, HotelDetailActivity::class.java).apply {
-                putExtra("HOTEL_NAME",      hotel.name)
-                putExtra("HOTEL_CITY",      hotel.city)
-                putExtra("HOTEL_DESC",      hotel.description)
-                putExtra("HOTEL_IMAGE",     hotel.imageUrl)
-                putExtra("HOTEL_LAT",       hotel.latitude)
-                putExtra("HOTEL_LON",       hotel.longitude)
+                putExtra("HOTEL_ID",        hotel.id)
                 putExtra("HOTEL_PRICE",     hotel.price)
                 putExtra("HOTEL_RATING",    hotel.rating)
                 putExtra("HOTEL_AVAILABLE", hotel.isAvailable)
+                putExtra("HOTEL_LAT",       hotel.latitude)
+                putExtra("HOTEL_LON",       hotel.longitude)
+                putExtra("HOTEL_IMAGE",     hotel.imageUrl)
             }
             val options = androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(
                 this, sharedImageView, "hotelImageTransition"
@@ -72,7 +72,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         val searchView = findViewById<androidx.appcompat.widget.SearchView>(R.id.searchView)
-        searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
+        searchView.setOnQueryTextListener(object :
+            androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?) = false
             override fun onQueryTextChange(newText: String?): Boolean {
                 viewModel.onQueryChanged(newText.orEmpty())
@@ -115,31 +116,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         val btnDark = findViewById<ImageButton>(R.id.btnDarkMode)
-
         fun updateThemeIcon() {
             val isDark = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
-            btnDark.setImageResource(
-                if (isDark) R.drawable.ic_sun
-                else        R.drawable.ic_moon
-            )
+            btnDark.setImageResource(if (isDark) R.drawable.ic_sun else R.drawable.ic_moon)
         }
         updateThemeIcon()
 
         btnDark.setOnClickListener {
-            val currentMode = AppCompatDelegate.getDefaultNightMode()
-            val newMode = if (currentMode == AppCompatDelegate.MODE_NIGHT_YES)
-                AppCompatDelegate.MODE_NIGHT_NO
-            else
-                AppCompatDelegate.MODE_NIGHT_YES
+            val newMode = if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES)
+                AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
             sharedPref.edit().putInt("night_mode", newMode).apply()
             AppCompatDelegate.setDefaultNightMode(newMode)
         }
 
         val btnLang = findViewById<Button>(R.id.btnLanguage)
-
-        fun updateLangLabel() {
-            btnLang.text = if (getSavedLang() == "en") "EN" else "БГ"
-        }
+        fun updateLangLabel() { btnLang.text = if (getSavedLang() == "en") "EN" else "БГ" }
         updateLangLabel()
 
         btnLang.setOnClickListener {

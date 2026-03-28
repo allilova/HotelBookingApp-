@@ -50,16 +50,21 @@ class HotelDetailActivity : AppCompatActivity() {
         setContentView(R.layout.activity_hotel_detail)
         supportPostponeEnterTransition()
 
-        // ── Intent extras ────────────────────────────────────────────────────
-        val name      = intent.getStringExtra("HOTEL_NAME")      ?: "Хотел"
-        val city      = intent.getStringExtra("HOTEL_CITY")      ?: ""
-        val desc      = intent.getStringExtra("HOTEL_DESC")      ?: ""
-        val imageUrl  = intent.getStringExtra("HOTEL_IMAGE")
-        val lat       = intent.getDoubleExtra("HOTEL_LAT",       42.6977)
-        val lon       = intent.getDoubleExtra("HOTEL_LON",       23.3219)
+        // Only non-translatable data comes via Intent.
+        // Translatable strings (name, city, desc) are resolved here using the
+        // active locale context so they are always in the correct language.
+        val hotelId   = intent.getIntExtra("HOTEL_ID", -1)
         val price     = intent.getDoubleExtra("HOTEL_PRICE",     0.0)
         val rating    = intent.getFloatExtra("HOTEL_RATING",     0f)
         val available = intent.getBooleanExtra("HOTEL_AVAILABLE", true)
+        val lat       = intent.getDoubleExtra("HOTEL_LAT",       42.6977)
+        val lon       = intent.getDoubleExtra("HOTEL_LON",       23.3219)
+        val imageUrl  = intent.getStringExtra("HOTEL_IMAGE")
+
+        val hotel = HotelRepository.getHotels(this).find { it.id == hotelId }
+        val name  = hotel?.name        ?: ""
+        val city  = hotel?.city        ?: ""
+        val desc  = hotel?.description ?: ""
 
         // ── View references ──────────────────────────────────────────────────
         val detailImage    = findViewById<ImageView>(R.id.detailImage)
@@ -87,11 +92,8 @@ class HotelDetailActivity : AppCompatActivity() {
                     target: Target<Drawable>, isFirstResource: Boolean
                 ): Boolean {
                     supportStartPostponedEnterTransition()
-                    Toast.makeText(
-                        this@HotelDetailActivity,
-                        getString(R.string.error_image_load),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(this@HotelDetailActivity,
+                        getString(R.string.error_image_load), Toast.LENGTH_SHORT).show()
                     return false
                 }
                 override fun onResourceReady(
@@ -108,9 +110,9 @@ class HotelDetailActivity : AppCompatActivity() {
         // ── Basic UI ─────────────────────────────────────────────────────────
         detailName.text = name
         detailDesc.text = desc
-        tvPrice.text    = "%.2f лв. / нощ".format(price)
+        tvPrice.text    = getString(R.string.price_per_night, price)
         rbRating.rating = rating
-        tvAvailability.text = if (available) "✓ Свободен" else "✗ Зает"
+        tvAvailability.text = getString(if (available) R.string.available else R.string.unavailable)
         tvAvailability.setTextColor(
             if (available) getColor(R.color.teal_available)
             else           getColor(R.color.red_unavailable)
@@ -132,22 +134,19 @@ class HotelDetailActivity : AppCompatActivity() {
                 picker.addOnPositiveButtonClickListener { selection ->
                     checkInMs  = selection.first
                     checkOutMs = selection.second
-                    val inStr  = sdf.format(Date(checkInMs!!))
-                    val outStr = sdf.format(Date(checkOutMs!!))
-                    tvDates.text = getString(R.string.selected_dates, inStr, outStr)
+                    tvDates.text = getString(R.string.selected_dates,
+                        sdf.format(Date(checkInMs!!)),
+                        sdf.format(Date(checkOutMs!!)))
                 }
                 picker.show(supportFragmentManager, "DATE_PICKER")
             } catch (e: Exception) {
-                Toast.makeText(
-                    this,
-                    getString(R.string.error_date_picker),
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this, getString(R.string.error_date_picker),
+                    Toast.LENGTH_SHORT).show()
             }
         }
 
         // ── Favourite ────────────────────────────────────────────────────────
-        viewModel.loadFavouriteState(name.hashCode())
+        viewModel.loadFavouriteState(hotelId)
 
         lifecycleScope.launch {
             viewModel.isFavourite.collect { fav ->
@@ -159,36 +158,35 @@ class HotelDetailActivity : AppCompatActivity() {
         }
 
         btnFav.setOnClickListener {
-            val fav = FavoriteHotel(
-                id       = name.hashCode(),
-                name     = name,
-                city     = city,
-                imageUrl = imageUrl
+            viewModel.toggleFavourite(
+                FavoriteHotel(
+                    id       = hotelId,
+                    hotelId  = hotelId,
+                    name     = name,     // stored as fallback only
+                    city     = city,     // stored as fallback only
+                    imageUrl = imageUrl
+                )
             )
-            viewModel.toggleFavourite(fav)
         }
 
         // ── Booking ──────────────────────────────────────────────────────────
         btnBook.setOnClickListener {
             if (checkInMs == null || checkOutMs == null) {
-                Toast.makeText(
-                    this,
-                    getString(R.string.pick_dates_first),
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this, getString(R.string.pick_dates_first),
+                    Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val nights = ((checkOutMs!! - checkInMs!!) / (1000 * 60 * 60 * 24))
-                .coerceAtLeast(1)
-            val booking = Booking(
-                hotelName     = name,
-                hotelCity     = city,
-                hotelImageUrl = imageUrl,
-                checkIn       = sdf.format(Date(checkInMs!!)),
-                checkOut      = sdf.format(Date(checkOutMs!!)),
-                pricePerNight = price
+            viewModel.saveBooking(
+                Booking(
+                    hotelId       = hotelId,
+                    hotelName     = name,     // stored as fallback only
+                    hotelCity     = city,     // stored as fallback only
+                    hotelImageUrl = imageUrl,
+                    checkIn       = sdf.format(Date(checkInMs!!)),
+                    checkOut      = sdf.format(Date(checkOutMs!!)),
+                    pricePerNight = price
+                )
             )
-            viewModel.saveBooking(booking)
         }
 
         // ── Observe booking result ───────────────────────────────────────────
@@ -198,36 +196,26 @@ class HotelDetailActivity : AppCompatActivity() {
                     val nights = ((checkOutMs!! - checkInMs!!) / (1000 * 60 * 60 * 24))
                         .coerceAtLeast(1)
                     sendNotification(name, nights, price)
-                    Toast.makeText(
-                        this@HotelDetailActivity,
+                    Toast.makeText(this@HotelDetailActivity,
                         getString(R.string.booking_sent, name, nights),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                        Toast.LENGTH_SHORT).show()
                 }
             }
         }
 
-        // ── Observe errors from ViewModel ────────────────────────────────────
+        // ── Observe errors ───────────────────────────────────────────────────
         lifecycleScope.launch {
             viewModel.errorEvent.collect { message ->
-                Toast.makeText(
-                    this@HotelDetailActivity,
-                    message,
-                    Toast.LENGTH_LONG
-                ).show()
+                Toast.makeText(this@HotelDetailActivity, message, Toast.LENGTH_LONG).show()
             }
         }
 
         // ── AR ───────────────────────────────────────────────────────────────
         btnAR.setOnClickListener {
-            startActivity(
-                android.content.Intent(this, ARViewActivity::class.java)
-                    .putExtra("HOTEL_NAME", name)
-            )
+            startActivity(android.content.Intent(this, ARViewActivity::class.java)
+                .putExtra("HOTEL_NAME", name))
         }
     }
-
-    // ── Private helpers ──────────────────────────────────────────────────────
 
     private fun setupMap(lat: Double, lon: Double, name: String) {
         try {
@@ -251,44 +239,28 @@ class HotelDetailActivity : AppCompatActivity() {
         try {
             val channelId = "hotel_notifications"
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                nm.createNotificationChannel(
-                    NotificationChannel(
-                        channelId,
-                        getString(R.string.notif_channel_name),
-                        NotificationManager.IMPORTANCE_DEFAULT
-                    )
-                )
+                nm.createNotificationChannel(NotificationChannel(
+                    channelId, getString(R.string.notif_channel_name),
+                    NotificationManager.IMPORTANCE_DEFAULT))
             }
-
-            val total = nights * price
+            val total   = nights * price
             val builder = NotificationCompat.Builder(this, channelId)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle(getString(R.string.notif_title))
-                .setContentText("$hotelName — $nights нощ/и — %.2f лв.".format(total))
+                .setContentText(getString(R.string.notif_text, hotelName, nights, total))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                ActivityCompat.checkSelfPermission(
-                    this, Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    101
-                )
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
                 return
             }
             nm.notify(1, builder.build())
         } catch (e: Exception) {
-            Toast.makeText(
-                this,
-                getString(R.string.error_notification),
-                Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(this, getString(R.string.error_notification), Toast.LENGTH_SHORT).show()
         }
     }
 }

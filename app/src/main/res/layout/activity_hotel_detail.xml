@@ -29,8 +29,8 @@
                 android:layout_margin="16dp"
                 android:background="@android:color/transparent"
                 android:src="@android:drawable/btn_star_big_off"
-                app:tint="@color/accent_orange"
-                android:contentDescription="Любими" />
+                android:contentDescription="@string/cd_favorite_toggle"
+                app:tint="@color/accent_orange" />
         </FrameLayout>
 
         <LinearLayout
@@ -46,7 +46,6 @@
                 android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="@color/primary_blue" />
-
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -98,13 +97,12 @@
                 android:layout_height="250dp"
                 android:layout_marginTop="15dp" />
 
-
             <Button
                 android:id="@+id/btnPickDates"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Избери дати"
+                android:text="@string/pick_dates"
                 android:backgroundTint="@color/primary_blue" />
 
             <TextView
@@ -122,7 +120,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:text="Виж в добавена реалност (AR)"
+                android:text="@string/view_ar"
                 android:backgroundTint="#673AB7"
                 app:icon="@android:drawable/ic_menu_camera" />
 
@@ -131,7 +129,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Резервирай сега"
+                android:text="@string/book_now"
                 android:backgroundTint="@color/accent_orange"
                 android:padding="15dp" />
 

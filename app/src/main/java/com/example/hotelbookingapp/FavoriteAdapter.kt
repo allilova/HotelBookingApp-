@@ -15,9 +15,9 @@ class FavoriteAdapter(
 ) : RecyclerView.Adapter<FavoriteAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val image: ImageView  = view.findViewById(R.id.favImage)
-        val name: TextView    = view.findViewById(R.id.favName)
-        val city: TextView    = view.findViewById(R.id.favCity)
+        val image: ImageView       = view.findViewById(R.id.favImage)
+        val name: TextView         = view.findViewById(R.id.favName)
+        val city: TextView         = view.findViewById(R.id.favCity)
         val deleteBtn: ImageButton = view.findViewById(R.id.btnDeleteFav)
     }
 
@@ -29,9 +29,15 @@ class FavoriteAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val hotel = list[position]
-        holder.name.text = hotel.name
-        holder.city.text = hotel.city
-        Glide.with(holder.itemView.context)
+
+        // Re-resolve name and city from HotelRepository using the current context
+        // so they always reflect the active locale, regardless of what was stored.
+        val ctx = holder.itemView.context
+        val resolved = HotelRepository.getHotels(ctx).find { it.id == hotel.hotelId }
+        holder.name.text = resolved?.name ?: hotel.name
+        holder.city.text = resolved?.city ?: hotel.city
+
+        Glide.with(ctx)
             .load(hotel.imageUrl)
             .centerCrop()
             .placeholder(R.drawable.ic_launcher_background)
