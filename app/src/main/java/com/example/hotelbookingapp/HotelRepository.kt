@@ -4,8 +4,6 @@ import android.content.Context
 
 object HotelRepository {
     fun getHotels(context: Context): List<Hotel> {
-        // Always use the passed context directly (never cache) so that
-        // string resources are resolved in the currently-active locale.
         val res = context.resources
         return listOf(
             Hotel(
@@ -42,5 +40,45 @@ object HotelRepository {
                 longitude = 27.9147
             )
         )
+    }
+
+    /**
+     * Finds a hotel in the current locale by trying:
+     * 1. Match by hotelId directly (works for records saved after MIGRATION_4_5)
+     * 2. Match by saved name against ALL locales (works for old records with hotelId = 0)
+     *    by loading both BG and EN names and finding which hotel matches,
+     *    then returning the current-locale version.
+     */
+    fun resolve(context: Context, hotelId: Int, savedName: String): Hotel? {
+        val current = getHotels(context)
+
+        // Try direct ID match first
+        if (hotelId > 0) {
+            current.find { it.id == hotelId }?.let { return it }
+        }
+
+        // Fallback: match saved name against BG strings (the original save language)
+        val bgContext = createLocaleContext(context, "bg")
+        val enContext = createLocaleContext(context, "en")
+
+        val bgHotels = getHotels(bgContext)
+        val enHotels = getHotels(enContext)
+
+        // Find which hotel index matches the saved name (in any language)
+        val allLocaleHotels = listOf(bgHotels, enHotels)
+        for (localeHotels in allLocaleHotels) {
+            val idx = localeHotels.indexOfFirst { it.name == savedName }
+            if (idx >= 0) {
+                return current[idx] // return the same hotel in the current locale
+            }
+        }
+        return null
+    }
+
+    private fun createLocaleContext(context: Context, language: String): Context {
+        val locale = java.util.Locale(language)
+        val config = android.content.res.Configuration(context.resources.configuration)
+        config.setLocale(locale)
+        return context.createConfigurationContext(config)
     }
 }

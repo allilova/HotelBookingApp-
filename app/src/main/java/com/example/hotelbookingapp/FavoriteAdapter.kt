@@ -16,11 +16,6 @@ class FavoriteAdapter(
     private val onDeleteClick: (FavoriteHotel) -> Unit
 ) : RecyclerView.Adapter<FavoriteAdapter.ViewHolder>() {
 
-    // Pre-resolve ALL hotel names once using the activity context when the
-    // adapter is created or data is updated. This guarantees the correct locale
-    // is used and avoids any stale-context issues inside onBindViewHolder.
-    private var resolvedHotels: List<Hotel> = HotelRepository.getHotels(activityContext)
-
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val image: ImageView       = view.findViewById(R.id.favImage)
         val name: TextView         = view.findViewById(R.id.favName)
@@ -36,7 +31,10 @@ class FavoriteAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val hotel = list[position]
-        val resolved = resolvedHotels.find { it.id == hotel.hotelId }
+
+        // Use resolve() which handles both new records (hotelId > 0) and old
+        // records (hotelId = 0) by matching the saved name across all locales.
+        val resolved = HotelRepository.resolve(activityContext, hotel.hotelId, hotel.name)
         holder.name.text = resolved?.name ?: hotel.name
         holder.city.text = resolved?.city ?: hotel.city
 
@@ -52,9 +50,6 @@ class FavoriteAdapter(
     override fun getItemCount() = list.size
 
     fun updateData(newList: List<FavoriteHotel>) {
-        // Re-resolve hotels on every update so a locale change mid-session
-        // is also picked up correctly.
-        resolvedHotels = HotelRepository.getHotels(activityContext)
         list = newList
         notifyDataSetChanged()
     }

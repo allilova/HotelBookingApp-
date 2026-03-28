@@ -18,10 +18,6 @@ class BookingAdapter(
 
     private val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
-    // Pre-resolve hotel names once from the activity context to guarantee
-    // the correct locale is used.
-    private val resolvedHotels: List<Hotel> = HotelRepository.getHotels(activityContext)
-
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val image:      ImageView = view.findViewById(R.id.bookingImage)
         val tvName:     TextView  = view.findViewById(R.id.bookingHotelName)
@@ -41,7 +37,9 @@ class BookingAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val b = list[position]
 
-        val resolved = resolvedHotels.find { it.id == b.hotelId }
+        // Use resolve() which handles both new records (hotelId > 0) and old
+        // records (hotelId = 0) by matching the saved name across all locales.
+        val resolved = HotelRepository.resolve(activityContext, b.hotelId, b.hotelName)
         val displayName = resolved?.name ?: b.hotelName
         val displayCity = resolved?.city ?: b.hotelCity
 
