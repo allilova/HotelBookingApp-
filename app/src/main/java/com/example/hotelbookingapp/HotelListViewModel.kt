@@ -1,6 +1,7 @@
 package com.example.hotelbookingapp
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,16 +16,16 @@ data class ListUiState(
     val isEmpty: Boolean = false
 )
 
-class HotelListViewModel : ViewModel() {
+class HotelListViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val allHotels = HotelRepository.getHotels()
+
+    private val allHotels = HotelRepository.getHotels(app.applicationContext)
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query
 
     private val _sortOrder = MutableStateFlow(SortOrder.NONE)
     val sortOrder: StateFlow<SortOrder> = _sortOrder
-
 
     val uiState: StateFlow<ListUiState> =
         combine(_query, _sortOrder) { query, sort ->

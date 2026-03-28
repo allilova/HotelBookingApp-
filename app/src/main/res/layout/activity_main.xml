@@ -6,80 +6,85 @@
     android:layout_height="match_parent"
     android:background="@color/gray_bg">
 
+
     <TextView
         android:id="@+id/tvHeader"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/find_hotel"
-        android:textSize="24sp"
+        android:textSize="22sp"
         android:textStyle="bold"
         android:layout_margin="16dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnDarkMode"
+        app:layout_constraintBottom_toBottomOf="@id/btnGoToProfile" />
 
-    <!-- Language toggle (BG / EN) -->
-    <Button
-        android:id="@+id/btnLanguage"
-        style="@style/Widget.Material3.Button.TextButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="EN"
-        android:textSize="13sp"
-        android:textColor="@color/primary_blue"
-        app:layout_constraintTop_toTopOf="@id/tvHeader"
-        app:layout_constraintBottom_toBottomOf="@id/tvHeader"
-        app:layout_constraintEnd_toStartOf="@id/btnDarkMode" />
 
-    <!-- Dark / Light mode toggle -->
     <ImageButton
         android:id="@+id/btnDarkMode"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@android:drawable/ic_menu_compass"
         android:contentDescription="@string/cd_toggle_theme"
         app:tint="@color/primary_blue"
-        app:layout_constraintTop_toTopOf="@id/tvHeader"
-        app:layout_constraintBottom_toBottomOf="@id/tvHeader"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnLanguage" />
+
+
+    <Button
+        android:id="@+id/btnLanguage"
+        style="@style/Widget.Material3.Button.TextButton"
+        android:layout_width="48dp"
+        android:layout_height="40dp"
+        android:text="EN"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="@color/primary_blue"
+        android:minWidth="0dp"
+        android:paddingStart="0dp"
+        android:paddingEnd="0dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btnGoToFavorites" />
 
     <ImageButton
         android:id="@+id/btnGoToFavorites"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="4dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@android:drawable/btn_star_big_on"
         android:contentDescription="@string/cd_favorites"
         app:tint="@color/accent_orange"
-        app:layout_constraintTop_toTopOf="@id/tvHeader"
-        app:layout_constraintBottom_toBottomOf="@id/tvHeader"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btnGoToBookings" />
 
     <ImageButton
         android:id="@+id/btnGoToBookings"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="4dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@android:drawable/ic_menu_agenda"
         android:contentDescription="@string/cd_bookings"
         app:tint="@color/primary_blue"
-        app:layout_constraintTop_toTopOf="@id/tvHeader"
-        app:layout_constraintBottom_toBottomOf="@id/tvHeader"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btnGoToProfile" />
 
     <ImageButton
         android:id="@+id/btnGoToProfile"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginEnd="16dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="12dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@android:drawable/ic_menu_myplaces"
         android:contentDescription="@string/cd_profile"
         app:tint="@color/primary_blue"
-        app:layout_constraintTop_toTopOf="@id/tvHeader"
-        app:layout_constraintBottom_toBottomOf="@id/tvHeader"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView

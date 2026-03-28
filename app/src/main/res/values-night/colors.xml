@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_blue">#7986CB</color>
+    <color name="primary_light">#9FA8DA</color>
+
+    <color name="accent_orange">#FFB74D</color>
+    <color name="star_gold">#FFD54F</color>
+
+    <color name="black">#FFFFFFFF</color>
+    <color name="white">#FF121212</color>
+    <color name="gray_bg">#FF1E1E1E</color>
+    <color name="text_secondary">#FFBDBDBD</color>
+
+    <color name="teal_available">#4DB6AC</color>
+    <color name="red_unavailable">#EF9A9A</color>
+</resources>

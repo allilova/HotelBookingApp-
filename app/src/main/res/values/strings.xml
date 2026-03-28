@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">HotelBookingApp</string>
 
-
     <string name="find_hotel">Намери хотел</string>
     <string name="bonus_points">Бонус точки: %d</string>
     <string name="search_hint">Търси по град или име…</string>
@@ -16,7 +15,6 @@
     <string name="vip_toast">Ти си VIP клиент! 15%% отстъпка!</string>
     <string name="cd_toggle_theme">Превключи тема</string>
 
-
     <string name="price_per_night">%.2f лв. / нощ</string>
     <string name="available">✓ Свободен</string>
     <string name="unavailable">✗ Зает</string>
@@ -29,29 +27,23 @@
     <string name="booking_sent">Резервацията за %1$s е изпратена! (%2$d нощ/и)</string>
     <string name="cd_favorite_toggle">Любими</string>
 
-
     <string name="title_favorites">Любими хотели</string>
     <string name="no_favorites">Нямате добавени любими хотели.</string>
-
 
     <string name="title_bookings">История на резервации</string>
     <string name="no_bookings">Нямате направени резервации.</string>
     <string name="nights_total" formatted="false">%1$d нощ/и — %.2f лв.</string>
     <string name="booked_at">Резервирано: %s</string>
 
-
     <string name="notif_channel_name">Booking Notifications</string>
     <string name="notif_title">Успешна резервация!</string>
     <string name="notif_text" formatted="false">%1$s — %2$d нощ/и — %.2f лв.</string>
-
 
     <string name="camera_permission_denied">Камерата изисква разрешение.</string>
     <string name="camera_start_failed">Камерата не може да се стартира: %s</string>
     <string name="distance_label">Разстояние: 0.5 км</string>
 
-
     <string name="splash_tagline">Намери своя перфектен престой</string>
-
 
     <string name="login_title">Добре дошъл!</string>
     <string name="login_subtitle">Влез в своя акаунт</string>
@@ -66,9 +58,7 @@
     <string name="go_to_register">Нямаш акаунт? Регистрирай се</string>
     <string name="go_to_login">Вече имаш акаунт? Влез</string>
 
-
     <string name="profile_joined">Регистриран на: %s</string>
-
 
     <string name="error_loading_bookings">Грешка при зареждане на резервации.</string>
     <string name="error_loading_favorites">Грешка при зареждане на любими.</string>
@@ -80,4 +70,17 @@
     <string name="error_notification">Грешка при изпращане на известие.</string>
     <string name="error_save_booking">Грешка при запазване на резервация.</string>
     <string name="error_toggle_favorite">Грешка при обновяване на любими.</string>
+
+
+    <string name="hotel_1_name">Гранд Хотел София</string>
+    <string name="hotel_1_city">София</string>
+    <string name="hotel_1_desc">Луксозен хотел в центъра.</string>
+
+    <string name="hotel_2_name">Хотел Тримонциум</string>
+    <string name="hotel_2_city">Пловдив</string>
+    <string name="hotel_2_desc">Класически стил и комфорт.</string>
+
+    <string name="hotel_3_name">Морска Звезда</string>
+    <string name="hotel_3_city">Варна</string>
+    <string name="hotel_3_desc">Прекрасна гледка към морето.</string>
 </resources>

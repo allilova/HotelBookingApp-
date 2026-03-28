@@ -1,7 +1,6 @@
 package com.example.hotelbookingapp
 
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
@@ -16,7 +15,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,6 +23,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val sharedPref = getSharedPreferences("HotelAppPrefs", android.content.Context.MODE_PRIVATE)
 
 
         val recyclerView = findViewById<RecyclerView>(R.id.rvHotels)
@@ -82,7 +82,6 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        val sharedPref = getSharedPreferences("HotelAppPrefs", android.content.Context.MODE_PRIVATE)
         val points = sharedPref.getInt("user_points", 0)
         findViewById<TextView>(R.id.tvPoints).text = getString(R.string.bonus_points, points)
         if (points >= 100) {
@@ -101,41 +100,55 @@ class MainActivity : AppCompatActivity() {
         }
 
 
+        val savedMode = sharedPref.getInt("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        if (AppCompatDelegate.getDefaultNightMode() != savedMode) {
+            AppCompatDelegate.setDefaultNightMode(savedMode)
+        }
+
         val btnDark = findViewById<ImageButton>(R.id.btnDarkMode)
+        fun updateDarkIcon() {
+            val isDark = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
+            btnDark.setImageResource(
+                if (isDark) android.R.drawable.ic_menu_close_clear_cancel
+                else android.R.drawable.ic_menu_compass
+            )
+        }
+        updateDarkIcon()
+
         btnDark.setOnClickListener {
             val currentMode = AppCompatDelegate.getDefaultNightMode()
             val newMode = if (currentMode == AppCompatDelegate.MODE_NIGHT_YES)
                 AppCompatDelegate.MODE_NIGHT_NO
             else
                 AppCompatDelegate.MODE_NIGHT_YES
-            AppCompatDelegate.setDefaultNightMode(newMode)
             sharedPref.edit().putInt("night_mode", newMode).apply()
+            AppCompatDelegate.setDefaultNightMode(newMode)
         }
-
-        val savedMode = sharedPref.getInt("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-        AppCompatDelegate.setDefaultNightMode(savedMode)
 
 
         val btnLang = findViewById<Button>(R.id.btnLanguage)
-        val currentLocale = getCurrentLocale()
-        btnLang.text = if (currentLocale.language == "bg") "EN" else "БГ"
+
+        fun getCurrentLang(): String {
+            val appLocales = AppCompatDelegate.getApplicationLocales()
+            return if (!appLocales.isEmpty) {
+                appLocales[0]?.language ?: "bg"
+            } else {
+                resources.configuration.locales[0].language
+            }
+        }
+
+
+        fun updateLangButton() {
+            btnLang.text = if (getCurrentLang() == "bg") "EN" else "БГ"
+        }
+        updateLangButton()
 
         btnLang.setOnClickListener {
-            val next = if (getCurrentLocale().language == "bg") "en" else "bg"
+            val next = if (getCurrentLang() == "bg") "en" else "bg"
             AppCompatDelegate.setApplicationLocales(
                 LocaleListCompat.forLanguageTags(next)
             )
 
-        }
-    }
-
-
-    private fun getCurrentLocale(): Locale {
-        val appLocales = AppCompatDelegate.getApplicationLocales()
-        return if (!appLocales.isEmpty) {
-            appLocales[0] ?: resources.configuration.locales[0]
-        } else {
-            resources.configuration.locales[0]
         }
     }
 }

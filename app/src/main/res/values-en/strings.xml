@@ -45,7 +45,6 @@
 
     <string name="splash_tagline">Find your perfect stay</string>
 
-
     <string name="login_title">Welcome back!</string>
     <string name="login_subtitle">Sign in to your account</string>
     <string name="register_title">Create an account</string>
@@ -59,7 +58,6 @@
     <string name="go_to_register">No account? Register here</string>
     <string name="go_to_login">Already have an account? Log in</string>
 
-
     <string name="profile_joined">Registered on: %s</string>
 
     <string name="error_loading_bookings">Failed to load bookings.</string>
@@ -72,4 +70,17 @@
     <string name="error_notification">Failed to send notification.</string>
     <string name="error_save_booking">Failed to save booking.</string>
     <string name="error_toggle_favorite">Failed to update favourites.</string>
+
+    <!-- Hotel data -->
+    <string name="hotel_1_name">Grand Hotel Sofia</string>
+    <string name="hotel_1_city">Sofia</string>
+    <string name="hotel_1_desc">A luxury hotel in the city centre.</string>
+
+    <string name="hotel_2_name">Hotel Trimontium</string>
+    <string name="hotel_2_city">Plovdiv</string>
+    <string name="hotel_2_desc">Classic style and comfort.</string>
+
+    <string name="hotel_3_name">Sea Star</string>
+    <string name="hotel_3_city">Varna</string>
+    <string name="hotel_3_desc">A wonderful view of the sea.</string>
 </resources>
