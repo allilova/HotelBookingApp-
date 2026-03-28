@@ -33,8 +33,6 @@ class BookingAdapter(private val list: List<Booking>) :
         val b = list[position]
         val ctx = holder.itemView.context
 
-        // Re-resolve name and city from HotelRepository so they always reflect
-        // the active locale, regardless of what language was active at booking time.
         val resolved = HotelRepository.getHotels(ctx).find { it.id == b.hotelId }
         val displayName = resolved?.name ?: b.hotelName
         val displayCity = resolved?.city ?: b.hotelCity
@@ -43,9 +41,9 @@ class BookingAdapter(private val list: List<Booking>) :
         holder.tvDates.text = "${b.checkIn}  →  ${b.checkOut}"
 
         val nights = calculateNights(b.checkIn, b.checkOut)
-        val total  = nights * b.pricePerNight
-        // Use string resource so "нощ/и" / "night(s)" and "лв." / "BGN" are localised
-        holder.tvPrice.text    = ctx.getString(R.string.nights_total, nights, total)
+        val total  = nights.toDouble() * b.pricePerNight
+
+        holder.tvPrice.text    = "${nights} нощ/и — ${"%.2f".format(total)} лв."
         holder.tvBookedAt.text = ctx.getString(R.string.booked_at, sdf.format(Date(b.bookedAt)))
 
         Glide.with(ctx)
