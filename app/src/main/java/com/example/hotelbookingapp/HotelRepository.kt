@@ -4,6 +4,8 @@ import android.content.Context
 
 object HotelRepository {
     fun getHotels(context: Context): List<Hotel> {
+        // Always use the passed context directly (never cache) so that
+        // string resources are resolved in the currently-active locale.
         val res = context.resources
         return listOf(
             Hotel(

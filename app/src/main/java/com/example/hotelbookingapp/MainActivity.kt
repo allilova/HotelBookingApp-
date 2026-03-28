@@ -24,10 +24,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+
+        viewModel.setResourceContext(this)
+
         val sharedPref = getSharedPreferences("HotelAppPrefs", android.content.Context.MODE_PRIVATE)
 
         fun getSavedLang(): String = sharedPref.getString("app_language", "bg") ?: "bg"
-
 
         val savedLang = getSavedLang()
         val currentLocales = AppCompatDelegate.getApplicationLocales()
@@ -36,7 +38,6 @@ class MainActivity : AppCompatActivity() {
             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(savedLang))
             return
         }
-
 
         val recyclerView = findViewById<RecyclerView>(R.id.rvHotels)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -70,7 +71,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
         val searchView = findViewById<androidx.appcompat.widget.SearchView>(R.id.searchView)
         searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?) = false
@@ -79,7 +79,6 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
         })
-
 
         val chipGroup = findViewById<ChipGroup>(R.id.chipGroupSort)
         chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
@@ -92,7 +91,6 @@ class MainActivity : AppCompatActivity() {
             viewModel.onSortChanged(order)
         }
 
-
         val points = sharedPref.getInt("user_points", 0)
         findViewById<TextView>(R.id.tvPoints).text = getString(R.string.bonus_points, points)
         if (points >= 100) {
@@ -100,7 +98,6 @@ class MainActivity : AppCompatActivity() {
                 this, getString(R.string.vip_toast), android.widget.Toast.LENGTH_LONG
             ).show()
         }
-
 
         findViewById<ImageButton>(R.id.btnGoToFavorites).setOnClickListener {
             startActivity(Intent(this, FavoritesActivity::class.java))
@@ -112,14 +109,12 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, UserProfileActivity::class.java))
         }
 
-
         val savedMode = sharedPref.getInt("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         if (AppCompatDelegate.getDefaultNightMode() != savedMode) {
             AppCompatDelegate.setDefaultNightMode(savedMode)
         }
 
         val btnDark = findViewById<ImageButton>(R.id.btnDarkMode)
-
 
         fun updateThemeIcon() {
             val isDark = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
@@ -140,9 +135,7 @@ class MainActivity : AppCompatActivity() {
             AppCompatDelegate.setDefaultNightMode(newMode)
         }
 
-
         val btnLang = findViewById<Button>(R.id.btnLanguage)
-
 
         fun updateLangLabel() {
             btnLang.text = if (getSavedLang() == "en") "EN" else "БГ"
@@ -153,7 +146,6 @@ class MainActivity : AppCompatActivity() {
             val next = if (getSavedLang() == "bg") "en" else "bg"
             sharedPref.edit().putString("app_language", next).apply()
             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(next))
-
         }
     }
 }

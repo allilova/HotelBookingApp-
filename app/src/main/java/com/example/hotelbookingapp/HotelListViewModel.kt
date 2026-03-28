@@ -1,6 +1,7 @@
 package com.example.hotelbookingapp
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +19,16 @@ data class ListUiState(
 
 class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
 
-    private fun loadHotels() = HotelRepository.getHotels(app.applicationContext)
+
+    private var resourceContext: Context = app.applicationContext
+
+
+    fun setResourceContext(context: Context) {
+        resourceContext = context
+        _query.value = _query.value
+    }
+
+    private fun loadHotels() = HotelRepository.getHotels(resourceContext)
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query
