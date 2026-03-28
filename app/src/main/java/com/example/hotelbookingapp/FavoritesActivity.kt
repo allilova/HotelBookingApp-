@@ -24,7 +24,7 @@ class FavoritesActivity : AppCompatActivity() {
         val rv = findViewById<RecyclerView>(R.id.rvFavorites)
         rv.layoutManager = LinearLayoutManager(this)
 
-        adapter = FavoriteAdapter(emptyList()) { hotel ->
+        adapter = FavoriteAdapter(emptyList(), this) { hotel ->
             lifecycleScope.launch {
                 try {
                     withContext(Dispatchers.IO) {

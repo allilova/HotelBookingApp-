@@ -26,9 +26,13 @@ class UserProfileActivity : AppCompatActivity() {
         val btnFav      = findViewById<Button>(R.id.btnProfileFavorites)
         val btnBookings = findViewById<Button>(R.id.btnProfileBookings)
 
+        // Use a locale-aware date format so the month name also respects the
+        // currently active language.
         val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+
         val sharedPref = getSharedPreferences("HotelAppPrefs", android.content.Context.MODE_PRIVATE)
         val points = sharedPref.getInt("user_points", 0)
+        // Use the string resource so the label is translated correctly.
         tvPoints.text = getString(R.string.bonus_points, points)
 
         viewModel.getLoggedInUser { user ->
@@ -37,6 +41,7 @@ class UserProfileActivity : AppCompatActivity() {
                 tvName.text    = user.fullName
                 tvEmail.text   = user.email
                 tvInitial.text = user.fullName.firstOrNull()?.uppercase() ?: "?"
+                // getString resolves from the active locale automatically.
                 tvJoined.text  = getString(R.string.profile_joined, sdf.format(Date(user.createdAt)))
             }
         }

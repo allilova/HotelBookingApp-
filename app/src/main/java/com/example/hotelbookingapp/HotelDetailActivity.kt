@@ -61,6 +61,8 @@ class HotelDetailActivity : AppCompatActivity() {
         val lon       = intent.getDoubleExtra("HOTEL_LON",       23.3219)
         val imageUrl  = intent.getStringExtra("HOTEL_IMAGE")
 
+        // Resolve translatable strings using THIS activity's context, which
+        // already has the correct locale applied by the system.
         val hotel = HotelRepository.getHotels(this).find { it.id == hotelId }
         val name  = hotel?.name        ?: ""
         val city  = hotel?.city        ?: ""
@@ -162,8 +164,8 @@ class HotelDetailActivity : AppCompatActivity() {
                 FavoriteHotel(
                     id       = hotelId,
                     hotelId  = hotelId,
-                    name     = name,     // stored as fallback only
-                    city     = city,     // stored as fallback only
+                    name     = name,
+                    city     = city,
                     imageUrl = imageUrl
                 )
             )
@@ -179,8 +181,8 @@ class HotelDetailActivity : AppCompatActivity() {
             viewModel.saveBooking(
                 Booking(
                     hotelId       = hotelId,
-                    hotelName     = name,     // stored as fallback only
-                    hotelCity     = city,     // stored as fallback only
+                    hotelName     = name,
+                    hotelCity     = city,
                     hotelImageUrl = imageUrl,
                     checkIn       = sdf.format(Date(checkInMs!!)),
                     checkOut      = sdf.format(Date(checkOutMs!!)),

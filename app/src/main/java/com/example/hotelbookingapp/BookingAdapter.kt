@@ -1,5 +1,6 @@
 package com.example.hotelbookingapp
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,10 +11,16 @@ import com.bumptech.glide.Glide
 import java.text.SimpleDateFormat
 import java.util.*
 
-class BookingAdapter(private val list: List<Booking>) :
-    RecyclerView.Adapter<BookingAdapter.ViewHolder>() {
+class BookingAdapter(
+    private val list: List<Booking>,
+    private val activityContext: Context
+) : RecyclerView.Adapter<BookingAdapter.ViewHolder>() {
 
     private val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+
+    // Pre-resolve hotel names once from the activity context to guarantee
+    // the correct locale is used.
+    private val resolvedHotels: List<Hotel> = HotelRepository.getHotels(activityContext)
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val image:      ImageView = view.findViewById(R.id.bookingImage)
@@ -24,16 +31,17 @@ class BookingAdapter(private val list: List<Booking>) :
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-        ViewHolder(LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_booking, parent, false))
+        ViewHolder(
+            LayoutInflater.from(activityContext)
+                .inflate(R.layout.item_booking, parent, false)
+        )
 
     override fun getItemCount() = list.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val b = list[position]
-        val ctx = holder.itemView.context
 
-        val resolved = HotelRepository.getHotels(ctx).find { it.id == b.hotelId }
+        val resolved = resolvedHotels.find { it.id == b.hotelId }
         val displayName = resolved?.name ?: b.hotelName
         val displayCity = resolved?.city ?: b.hotelCity
 
@@ -41,12 +49,12 @@ class BookingAdapter(private val list: List<Booking>) :
         holder.tvDates.text = "${b.checkIn}  →  ${b.checkOut}"
 
         val nights = calculateNights(b.checkIn, b.checkOut)
-        val total  = nights.toDouble() * b.pricePerNight
+        val total  = nights * b.pricePerNight
 
-        holder.tvPrice.text    = "${nights} нощ/и — ${"%.2f".format(total)} лв."
-        holder.tvBookedAt.text = ctx.getString(R.string.booked_at, sdf.format(Date(b.bookedAt)))
+        holder.tvPrice.text    = activityContext.getString(R.string.nights_total, nights.toInt(), total)
+        holder.tvBookedAt.text = activityContext.getString(R.string.booked_at, sdf.format(Date(b.bookedAt)))
 
-        Glide.with(ctx)
+        Glide.with(activityContext)
             .load(b.hotelImageUrl)
             .centerCrop()
             .placeholder(R.drawable.ic_launcher_background)

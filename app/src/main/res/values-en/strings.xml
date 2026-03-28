@@ -32,12 +32,14 @@
 
     <string name="title_bookings">Booking history</string>
     <string name="no_bookings">You have no bookings yet.</string>
-    <string name="nights_total" formatted="false">%1$d night(s) — %.2f BGN</string>
+    <!-- FIXED: both specifiers are now fully positional (%1$d and %2$.2f)
+         so Android never confuses the Int nights with the Double total. -->
+    <string name="nights_total" formatted="false">%1$d night(s) — %2$.2f BGN</string>
     <string name="booked_at">Booked: %s</string>
 
     <string name="notif_channel_name">Booking Notifications</string>
     <string name="notif_title">Booking confirmed!</string>
-    <string name="notif_text" formatted="false">%1$s — %2$d night(s) — %.2f BGN</string>
+    <string name="notif_text" formatted="false">%1$s — %2$d night(s) — %3$.2f BGN</string>
 
     <string name="camera_permission_denied">Camera permission is required.</string>
     <string name="camera_start_failed">Camera could not start: %s</string>

@@ -34,7 +34,9 @@ class BookingHistoryActivity : AppCompatActivity() {
                 } else {
                     rv.visibility      = View.VISIBLE
                     tvEmpty.visibility = View.GONE
-                    rv.adapter = BookingAdapter(bookings)
+                    // Pass `this@BookingHistoryActivity` so the adapter uses
+                    // the activity's locale-correct context for all string lookups.
+                    rv.adapter = BookingAdapter(bookings, this@BookingHistoryActivity)
                 }
             } catch (e: Exception) {
                 rv.visibility      = View.GONE
