@@ -26,8 +26,8 @@ class MainActivity : AppCompatActivity() {
 
         val sharedPref = getSharedPreferences("HotelAppPrefs", android.content.Context.MODE_PRIVATE)
 
-
         fun getSavedLang(): String = sharedPref.getString("app_language", "bg") ?: "bg"
+
 
         val savedLang = getSavedLang()
         val currentLocales = AppCompatDelegate.getApplicationLocales()
@@ -119,14 +119,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         val btnDark = findViewById<ImageButton>(R.id.btnDarkMode)
-        fun updateDarkIcon() {
+
+
+        fun updateThemeIcon() {
             val isDark = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
             btnDark.setImageResource(
-                if (isDark) android.R.drawable.ic_menu_close_clear_cancel
-                else android.R.drawable.ic_menu_compass
+                if (isDark) R.drawable.ic_sun
+                else        R.drawable.ic_moon
             )
         }
-        updateDarkIcon()
+        updateThemeIcon()
 
         btnDark.setOnClickListener {
             val currentMode = AppCompatDelegate.getDefaultNightMode()
@@ -142,12 +144,16 @@ class MainActivity : AppCompatActivity() {
         val btnLang = findViewById<Button>(R.id.btnLanguage)
 
 
-        btnLang.text = if (getSavedLang() == "bg") "EN" else "БГ"
+        fun updateLangLabel() {
+            btnLang.text = if (getSavedLang() == "en") "EN" else "БГ"
+        }
+        updateLangLabel()
 
         btnLang.setOnClickListener {
             val next = if (getSavedLang() == "bg") "en" else "bg"
             sharedPref.edit().putString("app_language", next).apply()
             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(next))
+
         }
     }
 }
