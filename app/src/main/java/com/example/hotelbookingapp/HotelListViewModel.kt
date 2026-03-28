@@ -25,19 +25,21 @@ class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
 
     fun setResourceContext(context: Context) {
         resourceContext = context
-        _query.value = _query.value
+        // Force the Flow to re-emit with the new context by toggling a trigger.
+        _reload.value = !_reload.value
     }
 
     private fun loadHotels() = HotelRepository.getHotels(resourceContext)
 
-    private val _query = MutableStateFlow("")
-    val query: StateFlow<String> = _query
-
+    private val _query     = MutableStateFlow("")
     private val _sortOrder = MutableStateFlow(SortOrder.NONE)
+    private val _reload    = MutableStateFlow(false)   // locale-change trigger
+
+    val query: StateFlow<String>        = _query
     val sortOrder: StateFlow<SortOrder> = _sortOrder
 
     val uiState: StateFlow<ListUiState> =
-        combine(_query, _sortOrder) { query, sort ->
+        combine(_query, _sortOrder, _reload) { query, sort, _ ->
             var list = if (query.isBlank()) loadHotels()
             else loadHotels().filter {
                 it.name.lowercase().contains(query.lowercase()) ||
@@ -56,6 +58,6 @@ class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
             ListUiState(loadHotels())
         )
 
-    fun onQueryChanged(q: String) { _query.value = q }
+    fun onQueryChanged(q: String)       { _query.value     = q     }
     fun onSortChanged(order: SortOrder) { _sortOrder.value = order }
 }
