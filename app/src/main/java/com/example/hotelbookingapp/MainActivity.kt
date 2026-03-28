@@ -27,6 +27,17 @@ class MainActivity : AppCompatActivity() {
         val sharedPref = getSharedPreferences("HotelAppPrefs", android.content.Context.MODE_PRIVATE)
 
 
+        fun getSavedLang(): String = sharedPref.getString("app_language", "bg") ?: "bg"
+
+        val savedLang = getSavedLang()
+        val currentLocales = AppCompatDelegate.getApplicationLocales()
+        val currentLang = if (!currentLocales.isEmpty) currentLocales[0]?.language ?: "" else ""
+        if (currentLang != savedLang) {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(savedLang))
+            return
+        }
+
+
         val recyclerView = findViewById<RecyclerView>(R.id.rvHotels)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
@@ -85,7 +96,9 @@ class MainActivity : AppCompatActivity() {
         val points = sharedPref.getInt("user_points", 0)
         findViewById<TextView>(R.id.tvPoints).text = getString(R.string.bonus_points, points)
         if (points >= 100) {
-            android.widget.Toast.makeText(this, getString(R.string.vip_toast), android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(
+                this, getString(R.string.vip_toast), android.widget.Toast.LENGTH_LONG
+            ).show()
         }
 
 
@@ -128,27 +141,13 @@ class MainActivity : AppCompatActivity() {
 
         val btnLang = findViewById<Button>(R.id.btnLanguage)
 
-        fun getCurrentLang(): String {
-            val appLocales = AppCompatDelegate.getApplicationLocales()
-            return if (!appLocales.isEmpty) {
-                appLocales[0]?.language ?: "bg"
-            } else {
-                resources.configuration.locales[0].language
-            }
-        }
 
-
-        fun updateLangButton() {
-            btnLang.text = if (getCurrentLang() == "bg") "EN" else "БГ"
-        }
-        updateLangButton()
+        btnLang.text = if (getSavedLang() == "bg") "EN" else "БГ"
 
         btnLang.setOnClickListener {
-            val next = if (getCurrentLang() == "bg") "en" else "bg"
-            AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(next)
-            )
-
+            val next = if (getSavedLang() == "bg") "en" else "bg"
+            sharedPref.edit().putString("app_language", next).apply()
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(next))
         }
     }
 }

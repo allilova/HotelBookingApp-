@@ -71,7 +71,7 @@
     <string name="error_save_booking">Грешка при запазване на резервация.</string>
     <string name="error_toggle_favorite">Грешка при обновяване на любими.</string>
 
-
+    <!-- Hotel data -->
     <string name="hotel_1_name">Гранд Хотел София</string>
     <string name="hotel_1_city">София</string>
     <string name="hotel_1_desc">Луксозен хотел в центъра.</string>

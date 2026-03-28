@@ -16,10 +16,9 @@ data class ListUiState(
     val isEmpty: Boolean = false
 )
 
-class HotelListViewModel(app: Application) : AndroidViewModel(app) {
+class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
 
-
-    private val allHotels = HotelRepository.getHotels(app.applicationContext)
+    private fun loadHotels() = HotelRepository.getHotels(app.applicationContext)
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query
@@ -29,8 +28,8 @@ class HotelListViewModel(app: Application) : AndroidViewModel(app) {
 
     val uiState: StateFlow<ListUiState> =
         combine(_query, _sortOrder) { query, sort ->
-            var list = if (query.isBlank()) allHotels
-            else allHotels.filter {
+            var list = if (query.isBlank()) loadHotels()
+            else loadHotels().filter {
                 it.name.lowercase().contains(query.lowercase()) ||
                         it.city.lowercase().contains(query.lowercase())
             }
@@ -41,7 +40,11 @@ class HotelListViewModel(app: Application) : AndroidViewModel(app) {
                 SortOrder.NONE        -> list
             }
             ListUiState(hotels = list, isEmpty = list.isEmpty())
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListUiState(allHotels))
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            ListUiState(loadHotels())
+        )
 
     fun onQueryChanged(q: String) { _query.value = q }
     fun onSortChanged(order: SortOrder) { _sortOrder.value = order }
