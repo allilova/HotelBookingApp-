@@ -26,6 +26,7 @@
     <string name="pick_dates_first">Please choose dates before booking.</string>
     <string name="booking_sent">Booking for %1$s sent! (%2$d night(s))</string>
     <string name="cd_favorite_toggle">Favourites</string>
+    <string name="distance_from_you">%.1f km from you</string>
 
     <string name="title_favorites">Favourite hotels</string>
     <string name="no_favorites">You have no favourite hotels yet.</string>

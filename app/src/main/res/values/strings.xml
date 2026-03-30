@@ -26,6 +26,7 @@
     <string name="pick_dates_first">Моля, избери дати преди резервация.</string>
     <string name="booking_sent">Резервацията за %1$s е изпратена! (%2$d нощ/и)</string>
     <string name="cd_favorite_toggle">Любими</string>
+    <string name="distance_from_you">%.1f км от вас</string>
 
     <string name="title_favorites">Любими хотели</string>
     <string name="no_favorites">Нямате добавени любими хотели.</string>

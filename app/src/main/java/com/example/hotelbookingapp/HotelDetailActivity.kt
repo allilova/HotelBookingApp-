@@ -13,6 +13,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -36,6 +37,9 @@ class HotelDetailActivity : AppCompatActivity() {
 
     private var checkInMs: Long?  = null
     private var checkOutMs: Long? = null
+
+    private val locationViewModel: LocationViewModel by viewModels()
+    private companion object { const val REQUEST_LOCATION = 300 }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,6 +80,7 @@ class HotelDetailActivity : AppCompatActivity() {
         val rbRating       = findViewById<RatingBar>(R.id.detailRating)
         val tvAvailability = findViewById<TextView>(R.id.detailAvailability)
         val tvDates        = findViewById<TextView>(R.id.tvSelectedDates)
+        val tvDistance = findViewById<TextView>(R.id.tvDistance)
         val btnPickDates   = findViewById<Button>(R.id.btnPickDates)
         val btnBook        = findViewById<Button>(R.id.btnBookNow)
         val btnAR          = findViewById<Button>(R.id.btnViewAR)
@@ -122,6 +127,28 @@ class HotelDetailActivity : AppCompatActivity() {
 
         // ── Map ──────────────────────────────────────────────────────────────
         setupMap(lat, lon, name)
+        // ── Location ─────────────────────────────────────────────────────────
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED) {
+            locationViewModel.startTracking(this)
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION),
+                REQUEST_LOCATION
+            )
+        }
+
+        lifecycleScope.launch {
+            locationViewModel.location.collect { userLoc ->
+                if (userLoc == null) return@collect
+                val km = locationViewModel.distanceKm(
+                    userLoc.latitude, userLoc.longitude, lat, lon
+                )
+                tvDistance.text = getString(R.string.distance_from_you, km)
+            }
+        }
 
         // ── Date picker ──────────────────────────────────────────────────────
         btnPickDates.setOnClickListener {
@@ -263,6 +290,24 @@ class HotelDetailActivity : AppCompatActivity() {
             nm.notify(1, builder.build())
         } catch (e: Exception) {
             Toast.makeText(this, getString(R.string.error_notification), Toast.LENGTH_SHORT).show()
+        }
+    }
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_LOCATION &&
+            grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            locationViewModel.startTracking(this)
+        }
+    }
+    override fun onStop()  { super.onStop();  locationViewModel.stopTracking() }
+    override fun onStart() { super.onStart();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED) {
+            locationViewModel.startTracking(this)
         }
     }
 }
