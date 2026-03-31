@@ -139,10 +139,10 @@ class HotelDetailActivity : AppCompatActivity() {
                 REQUEST_LOCATION
             )
         }
-
         lifecycleScope.launch {
             locationViewModel.location.collect { userLoc ->
                 if (userLoc == null) return@collect
+                android.util.Log.d("LOCATION", "lat=${userLoc.latitude} lon=${userLoc.longitude}")
                 val km = locationViewModel.distanceKm(
                     userLoc.latitude, userLoc.longitude, lat, lon
                 )
@@ -240,9 +240,12 @@ class HotelDetailActivity : AppCompatActivity() {
         }
 
         // ── AR ───────────────────────────────────────────────────────────────
+        // After — passes lat/lon too
         btnAR.setOnClickListener {
             startActivity(android.content.Intent(this, ARViewActivity::class.java)
-                .putExtra("HOTEL_NAME", name))
+                .putExtra("HOTEL_NAME", name)
+                .putExtra("HOTEL_LAT", lat)
+                .putExtra("HOTEL_LON", lon))
         }
     }
 
