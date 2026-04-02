@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A simple upward-pointing arrow. ARViewActivity rotates this ImageView
+     so it always points from the device toward the hotel. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+
+    <!-- Arrowhead pointing up -->
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M32,4 L52,36 L38,36 L38,60 L26,60 L26,36 L12,36 Z" />
+
+</vector>

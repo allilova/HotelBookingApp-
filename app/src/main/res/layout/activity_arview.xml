@@ -3,36 +3,65 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Camera preview fills the whole screen -->
     <androidx.camera.view.PreviewView
         android:id="@+id/viewFinder"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- AR overlay: hotel info card centred on screen -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="220dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:background="@drawable/ic_launcher_background"
         android:backgroundTint="#CC000000"
         android:orientation="vertical"
+        android:gravity="center"
         android:padding="20dp">
 
+        <!-- Hotel name -->
         <TextView
             android:id="@+id/arHotelName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/white"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:gravity="center" />
 
+        <!-- Live distance -->
         <TextView
             android:id="@+id/arDistance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="6dp"
             android:text="—"
             android:textColor="@color/accent_orange"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:gravity="center" />
+
+        <!-- Compass arrow pointing toward hotel -->
+        <ImageView
+            android:id="@+id/arArrow"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginTop="12dp"
+            android:src="@drawable/ic_ar_arrow"
+            android:contentDescription="@string/cd_ar_arrow" />
+
+        <!-- Cardinal direction label e.g. "Direction: NE" -->
+        <TextView
+            android:id="@+id/arBearing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="—"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:gravity="center" />
+
     </LinearLayout>
+
 </FrameLayout>

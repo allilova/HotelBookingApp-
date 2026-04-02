@@ -1,10 +1,12 @@
 package com.example.hotelbookingapp
 
 import android.content.Intent
+import android.hardware.SensorManager
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -19,6 +21,10 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     private val viewModel: HotelListViewModel by viewModels()
+
+    // ── Shake ─────────────────────────────────────────────────────────
+    private lateinit var sensorManager: SensorManager
+    private lateinit var shakeDetector: ShakeDetector
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,13 +44,11 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        // ── RecyclerView ──────────────────────────────────────────────
         val recyclerView = findViewById<RecyclerView>(R.id.rvHotels)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
         val adapter = HotelAdapter { hotel, sharedImageView ->
-            // Pass only the hotel ID and non-translatable fields.
-            // HotelDetailActivity resolves name/city/description itself using its
-            // own context, so it always shows the currently active locale.
             val intent = Intent(this, HotelDetailActivity::class.java).apply {
                 putExtra("HOTEL_ID",        hotel.id)
                 putExtra("HOTEL_PRICE",     hotel.price)
@@ -66,11 +70,12 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.uiState.collect { state ->
                 adapter.submitList(state.hotels)
-                tvEmpty.isVisible = state.isEmpty
+                tvEmpty.isVisible      = state.isEmpty
                 recyclerView.isVisible = !state.isEmpty
             }
         }
 
+        // ── Search ────────────────────────────────────────────────────
         val searchView = findViewById<androidx.appcompat.widget.SearchView>(R.id.searchView)
         searchView.setOnQueryTextListener(object :
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
@@ -81,6 +86,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        // ── Sort chips ────────────────────────────────────────────────
         val chipGroup = findViewById<ChipGroup>(R.id.chipGroupSort)
         chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
             val order = when (checkedIds.firstOrNull()) {
@@ -92,14 +98,14 @@ class MainActivity : AppCompatActivity() {
             viewModel.onSortChanged(order)
         }
 
+        // ── Points ────────────────────────────────────────────────────
         val points = sharedPref.getInt("user_points", 0)
         findViewById<TextView>(R.id.tvPoints).text = getString(R.string.bonus_points, points)
         if (points >= 100) {
-            android.widget.Toast.makeText(
-                this, getString(R.string.vip_toast), android.widget.Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(this, getString(R.string.vip_toast), Toast.LENGTH_LONG).show()
         }
 
+        // ── Navigation buttons ────────────────────────────────────────
         findViewById<ImageButton>(R.id.btnGoToFavorites).setOnClickListener {
             startActivity(Intent(this, FavoritesActivity::class.java))
         }
@@ -110,18 +116,17 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, UserProfileActivity::class.java))
         }
 
+        // ── Dark mode ─────────────────────────────────────────────────
         val savedMode = sharedPref.getInt("night_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         if (AppCompatDelegate.getDefaultNightMode() != savedMode) {
             AppCompatDelegate.setDefaultNightMode(savedMode)
         }
-
         val btnDark = findViewById<ImageButton>(R.id.btnDarkMode)
         fun updateThemeIcon() {
             val isDark = AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES
             btnDark.setImageResource(if (isDark) R.drawable.ic_sun else R.drawable.ic_moon)
         }
         updateThemeIcon()
-
         btnDark.setOnClickListener {
             val newMode = if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES)
                 AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
@@ -129,14 +134,37 @@ class MainActivity : AppCompatActivity() {
             AppCompatDelegate.setDefaultNightMode(newMode)
         }
 
+        // ── Language ──────────────────────────────────────────────────
         val btnLang = findViewById<Button>(R.id.btnLanguage)
         fun updateLangLabel() { btnLang.text = if (getSavedLang() == "en") "EN" else "БГ" }
         updateLangLabel()
-
         btnLang.setOnClickListener {
             val next = if (getSavedLang() == "bg") "en" else "bg"
             sharedPref.edit().putString("app_language", next).apply()
             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(next))
         }
+
+        // ── Shake to shuffle ──────────────────────────────────────────
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        shakeDetector = ShakeDetector(onShake = {
+            viewModel.shuffle()
+            runOnUiThread {
+                Toast.makeText(this, getString(R.string.shake_shuffled), Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)?.let { accel ->
+            sensorManager.registerListener(
+                shakeDetector, accel, SensorManager.SENSOR_DELAY_UI
+            )
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorManager.unregisterListener(shakeDetector)
     }
 }

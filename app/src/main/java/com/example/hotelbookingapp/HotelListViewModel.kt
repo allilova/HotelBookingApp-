@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 
-enum class SortOrder { NONE, PRICE_ASC, PRICE_DESC, RATING_DESC }
+enum class SortOrder { NONE, PRICE_ASC, PRICE_DESC, RATING_DESC, RANDOM }
 
 data class ListUiState(
     val hotels: List<Hotel> = emptyList(),
@@ -19,13 +19,10 @@ data class ListUiState(
 
 class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
 
-
     private var resourceContext: Context = app.applicationContext
-
 
     fun setResourceContext(context: Context) {
         resourceContext = context
-        // Force the Flow to re-emit with the new context by toggling a trigger.
         _reload.value = !_reload.value
     }
 
@@ -33,7 +30,7 @@ class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private val _query     = MutableStateFlow("")
     private val _sortOrder = MutableStateFlow(SortOrder.NONE)
-    private val _reload    = MutableStateFlow(false)   // locale-change trigger
+    private val _reload    = MutableStateFlow(false)
 
     val query: StateFlow<String>        = _query
     val sortOrder: StateFlow<SortOrder> = _sortOrder
@@ -49,6 +46,7 @@ class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
                 SortOrder.PRICE_ASC   -> list.sortedBy { it.price }
                 SortOrder.PRICE_DESC  -> list.sortedByDescending { it.price }
                 SortOrder.RATING_DESC -> list.sortedByDescending { it.rating }
+                SortOrder.RANDOM      -> list.shuffled()
                 SortOrder.NONE        -> list
             }
             ListUiState(hotels = list, isEmpty = list.isEmpty())
@@ -60,4 +58,10 @@ class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
 
     fun onQueryChanged(q: String)       { _query.value     = q     }
     fun onSortChanged(order: SortOrder) { _sortOrder.value = order }
+
+
+    fun shuffle() {
+        _sortOrder.value = SortOrder.RANDOM
+        _reload.value = !_reload.value
+    }
 }
