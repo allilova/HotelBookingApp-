@@ -6,14 +6,15 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [FavoriteHotel::class, Booking::class, User::class],
-    version = 5,
+    entities = [FavoriteHotel::class, Booking::class, User::class, CustomHotel::class],
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun hotelDao(): HotelDao
     abstract fun bookingDao(): BookingDao
     abstract fun userDao(): UserDao
+    abstract fun customHotelDao(): CustomHotelDao
 
     companion object {
 
@@ -55,19 +56,45 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        // Adds hotelId to favorite_hotels and bookings so adapters can
-        // re-resolve the hotel name/city in whatever locale is currently active,
-        // rather than displaying the language that was active at save time.
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // favorite_hotels: add hotelId (default 0 for pre-existing rows)
                 db.execSQL(
                     "ALTER TABLE favorite_hotels ADD COLUMN hotelId INTEGER NOT NULL DEFAULT 0"
                 )
-                // bookings: add hotelId (default 0 for pre-existing rows)
                 db.execSQL(
                     "ALTER TABLE bookings ADD COLUMN hotelId INTEGER NOT NULL DEFAULT 0"
                 )
+            }
+        }
+
+        // Add role column to users table (default = GUEST for all existing users)
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'GUEST'"
+                )
+            }
+        }
+
+        // Add custom_hotels table for HOST-created listings
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS custom_hotels (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        ownerUserId INTEGER NOT NULL,
+                        name TEXT NOT NULL,
+                        city TEXT NOT NULL,
+                        price REAL NOT NULL,
+                        rating REAL NOT NULL DEFAULT 0,
+                        imageUrl TEXT NOT NULL DEFAULT '',
+                        description TEXT NOT NULL DEFAULT '',
+                        latitude REAL NOT NULL DEFAULT 0.0,
+                        longitude REAL NOT NULL DEFAULT 0.0,
+                        isAvailable INTEGER NOT NULL DEFAULT 1,
+                        createdAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
             }
         }
     }

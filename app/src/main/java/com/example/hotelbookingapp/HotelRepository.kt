@@ -3,7 +3,23 @@ package com.example.hotelbookingapp
 import android.content.Context
 
 object HotelRepository {
-    fun getHotels(context: Context): List<Hotel> {
+
+    // ── Static base ID range: 1–999
+    // ── Custom hotel IDs start from their Room autoincrement (offset by CUSTOM_ID_OFFSET)
+    private const val CUSTOM_ID_OFFSET = 1_000
+
+    /** Convert a CustomHotel's Room id to the universal Hotel id used throughout the app. */
+    fun customToHotelId(customId: Int) = customId + CUSTOM_ID_OFFSET
+
+    /** Returns true when a universal hotel id belongs to a custom hotel. */
+    fun isCustomId(hotelId: Int) = hotelId >= CUSTOM_ID_OFFSET
+
+    /** Extract the Room primary-key from a universal hotel id. */
+    fun hotelIdToCustomId(hotelId: Int) = hotelId - CUSTOM_ID_OFFSET
+
+    // ── Static hotels ─────────────────────────────────────────────────────────
+
+    fun getStaticHotels(context: Context): List<Hotel> {
         val res = context.resources
         return listOf(
             Hotel(
@@ -42,35 +58,61 @@ object HotelRepository {
         )
     }
 
+    // ── Kept for backwards-compat call sites that don't need custom hotels ────
+    fun getHotels(context: Context): List<Hotel> = getStaticHotels(context)
+
+    // ── Merge static + custom ─────────────────────────────────────────────────
+
+    /** Returns ALL hotels (static + host-created) as a unified list. */
+    fun getAllHotels(context: Context, db: AppDatabase): List<Hotel> {
+        val static = getStaticHotels(context)
+        val custom = db.customHotelDao().getAllCustomHotels().map { it.toHotel() }
+        return static + custom
+    }
+
+    /** Convert a CustomHotel (Room entity) to the universal Hotel model. */
+    fun CustomHotel.toHotel() = Hotel(
+        id          = customToHotelId(id),
+        name        = name,
+        city        = city,
+        price       = price,
+        rating      = rating,
+        imageUrl    = imageUrl,
+        description = description,
+        latitude    = latitude,
+        longitude   = longitude,
+        isAvailable = isAvailable
+    )
+
+    // ── Resolution helpers ────────────────────────────────────────────────────
+
     /**
      * Finds a hotel in the current locale by trying:
-     * 1. Match by hotelId directly (works for records saved after MIGRATION_4_5)
-     * 2. Match by saved name against ALL locales (works for old records with hotelId = 0)
-     *    by loading both BG and EN names and finding which hotel matches,
-     *    then returning the current-locale version.
+     * 1. Match by hotelId directly.
+     * 2. Match by saved name against all locales (old records with hotelId = 0).
      */
     fun resolve(context: Context, hotelId: Int, savedName: String): Hotel? {
-        val current = getHotels(context)
+        // Custom hotel?
+        if (isCustomId(hotelId)) {
+            val db = DatabaseProvider.get(context)
+            val custom = db.customHotelDao().getHotelById(hotelIdToCustomId(hotelId))
+            return custom?.toHotel()
+        }
 
-        // Try direct ID match first
+        val current = getStaticHotels(context)
         if (hotelId > 0) {
             current.find { it.id == hotelId }?.let { return it }
         }
 
-        // Fallback: match saved name against BG strings (the original save language)
+        // Fallback name-matching across locales
         val bgContext = createLocaleContext(context, "bg")
         val enContext = createLocaleContext(context, "en")
+        val bgHotels  = getStaticHotels(bgContext)
+        val enHotels  = getStaticHotels(enContext)
 
-        val bgHotels = getHotels(bgContext)
-        val enHotels = getHotels(enContext)
-
-        // Find which hotel index matches the saved name (in any language)
-        val allLocaleHotels = listOf(bgHotels, enHotels)
-        for (localeHotels in allLocaleHotels) {
+        for (localeHotels in listOf(bgHotels, enHotels)) {
             val idx = localeHotels.indexOfFirst { it.name == savedName }
-            if (idx >= 0) {
-                return current[idx] // return the same hotel in the current locale
-            }
+            if (idx >= 0) return current[idx]
         }
         return null
     }

@@ -55,8 +55,6 @@ class HotelDetailActivity : AppCompatActivity() {
         supportPostponeEnterTransition()
 
         // Only non-translatable data comes via Intent.
-        // Translatable strings (name, city, desc) are resolved here using the
-        // active locale context so they are always in the correct language.
         val hotelId   = intent.getIntExtra("HOTEL_ID", -1)
         val price     = intent.getDoubleExtra("HOTEL_PRICE",     0.0)
         val rating    = intent.getFloatExtra("HOTEL_RATING",     0f)
@@ -65,12 +63,12 @@ class HotelDetailActivity : AppCompatActivity() {
         val lon       = intent.getDoubleExtra("HOTEL_LON",       23.3219)
         val imageUrl  = intent.getStringExtra("HOTEL_IMAGE")
 
-        // Resolve translatable strings using THIS activity's context, which
-        // already has the correct locale applied by the system.
-        val hotel = HotelRepository.getHotels(this).find { it.id == hotelId }
-        val name  = hotel?.name        ?: ""
-        val city  = hotel?.city        ?: ""
-        val desc  = hotel?.description ?: ""
+        // Resolve hotel name/city/description from repository
+        // Works for both static hotels (id 1-999) and custom hotels (id >= 1000)
+        val hotel = resolveHotel(hotelId)
+        val name  = hotel?.name        ?: intent.getStringExtra("HOTEL_NAME") ?: ""
+        val city  = hotel?.city        ?: intent.getStringExtra("HOTEL_CITY") ?: ""
+        val desc  = hotel?.description ?: intent.getStringExtra("HOTEL_DESC") ?: ""
 
         // ── View references ──────────────────────────────────────────────────
         val detailImage    = findViewById<ImageView>(R.id.detailImage)
@@ -80,7 +78,7 @@ class HotelDetailActivity : AppCompatActivity() {
         val rbRating       = findViewById<RatingBar>(R.id.detailRating)
         val tvAvailability = findViewById<TextView>(R.id.detailAvailability)
         val tvDates        = findViewById<TextView>(R.id.tvSelectedDates)
-        val tvDistance = findViewById<TextView>(R.id.tvDistance)
+        val tvDistance     = findViewById<TextView>(R.id.tvDistance)
         val btnPickDates   = findViewById<Button>(R.id.btnPickDates)
         val btnBook        = findViewById<Button>(R.id.btnBookNow)
         val btnAR          = findViewById<Button>(R.id.btnViewAR)
@@ -127,6 +125,7 @@ class HotelDetailActivity : AppCompatActivity() {
 
         // ── Map ──────────────────────────────────────────────────────────────
         setupMap(lat, lon, name)
+
         // ── Location ─────────────────────────────────────────────────────────
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             == PackageManager.PERMISSION_GRANTED) {
@@ -142,7 +141,6 @@ class HotelDetailActivity : AppCompatActivity() {
         lifecycleScope.launch {
             locationViewModel.location.collect { userLoc ->
                 if (userLoc == null) return@collect
-                android.util.Log.d("LOCATION", "lat=${userLoc.latitude} lon=${userLoc.longitude}")
                 val km = locationViewModel.distanceKm(
                     userLoc.latitude, userLoc.longitude, lat, lon
                 )
@@ -240,12 +238,27 @@ class HotelDetailActivity : AppCompatActivity() {
         }
 
         // ── AR ───────────────────────────────────────────────────────────────
-        // After — passes lat/lon too
         btnAR.setOnClickListener {
             startActivity(android.content.Intent(this, ARViewActivity::class.java)
                 .putExtra("HOTEL_NAME", name)
-                .putExtra("HOTEL_LAT", lat)
-                .putExtra("HOTEL_LON", lon))
+                .putExtra("HOTEL_LAT",  lat)
+                .putExtra("HOTEL_LON",  lon))
+        }
+    }
+
+    /**
+     * Resolves a Hotel object for any hotel ID — both static (1–999) and
+     * custom / host-created (>= 1000).
+     */
+    private fun resolveHotel(hotelId: Int): Hotel? {
+        return if (HotelRepository.isCustomId(hotelId)) {
+            val db = DatabaseProvider.get(this)
+            val customId = HotelRepository.hotelIdToCustomId(hotelId)
+            db.customHotelDao().getHotelById(customId)?.let {
+                with(HotelRepository) { it.toHotel() }
+            }
+        } else {
+            HotelRepository.getStaticHotels(this).find { it.id == hotelId }
         }
     }
 
@@ -295,6 +308,7 @@ class HotelDetailActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.error_notification), Toast.LENGTH_SHORT).show()
         }
     }
+
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
@@ -306,8 +320,10 @@ class HotelDetailActivity : AppCompatActivity() {
             locationViewModel.startTracking(this)
         }
     }
+
     override fun onStop()  { super.onStop();  locationViewModel.stopTracking() }
-    override fun onStart() { super.onStart();
+    override fun onStart() {
+        super.onStart()
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             == PackageManager.PERMISSION_GRANTED) {
             locationViewModel.startTracking(this)

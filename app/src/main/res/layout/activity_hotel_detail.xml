@@ -1,49 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- res/layout-land/activity_hotel_detail.xml
+     Side-by-side landscape layout: image on the left, details scrollable on the right -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="horizontal"
     android:background="@color/white">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+    <!-- Left: fixed image + favourite button -->
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
 
-        <FrameLayout
+        <ImageView
+            android:id="@+id/detailImage"
             android:layout_width="match_parent"
-            android:layout_height="300dp">
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:transitionName="hotelImageTransition" />
 
-            <ImageView
-                android:id="@+id/detailImage"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:transitionName="hotelImageTransition" />
+        <ImageButton
+            android:id="@+id/btnFavorite"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="end|top"
+            android:layout_margin="12dp"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/btn_star_big_off"
+            android:contentDescription="@string/cd_favorite_toggle"
+            app:tint="@color/accent_orange" />
+    </FrameLayout>
 
-            <ImageButton
-                android:id="@+id/btnFavorite"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:layout_gravity="end|top"
-                android:layout_margin="16dp"
-                android:background="@android:color/transparent"
-                android:src="@android:drawable/btn_star_big_off"
-                android:contentDescription="@string/cd_favorite_toggle"
-                app:tint="@color/accent_orange" />
-        </FrameLayout>
+    <!-- Right: scrollable details -->
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="16dp">
 
             <TextView
                 android:id="@+id/detailName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="26sp"
+                android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="@color/primary_blue" />
 
@@ -51,7 +57,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:gravity="center_vertical">
 
                 <TextView
@@ -59,7 +65,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textSize="18sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="@color/primary_blue" />
 
@@ -67,14 +73,15 @@
                     android:id="@+id/detailAvailability"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
+
                 <TextView
                     android:id="@+id/tvDistance"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:textSize="13sp"
+                    android:layout_marginStart="10dp"
+                    android:textSize="12sp"
                     android:textColor="@color/text_secondary"
                     android:text="—" />
             </LinearLayout>
@@ -84,7 +91,7 @@
                 style="?android:attr/ratingBarStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="4dp"
                 android:numStars="5"
                 android:stepSize="0.5"
                 android:isIndicator="true"
@@ -94,22 +101,22 @@
                 android:id="@+id/detailDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:textSize="16sp"
-                android:lineSpacingExtra="4dp"
+                android:layout_marginTop="10dp"
+                android:textSize="14sp"
+                android:lineSpacingExtra="3dp"
                 android:textColor="@color/black" />
 
             <org.osmdroid.views.MapView
                 android:id="@+id/map"
                 android:layout_width="match_parent"
-                android:layout_height="250dp"
-                android:layout_marginTop="15dp" />
+                android:layout_height="180dp"
+                android:layout_marginTop="10dp" />
 
             <Button
                 android:id="@+id/btnPickDates"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="10dp"
                 android:text="@string/pick_dates"
                 android:backgroundTint="@color/primary_blue" />
 
@@ -117,9 +124,9 @@
                 android:id="@+id/tvSelectedDates"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:text=""
-                android:textSize="14sp"
+                android:textSize="13sp"
                 android:textColor="@color/primary_blue"
                 android:gravity="center" />
 
@@ -127,7 +134,7 @@
                 android:id="@+id/btnViewAR"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="8dp"
                 android:text="@string/view_ar"
                 android:backgroundTint="#673AB7"
                 app:icon="@android:drawable/ic_menu_camera" />
@@ -136,11 +143,12 @@
                 android:id="@+id/btnBookNow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
                 android:text="@string/book_now"
                 android:backgroundTint="@color/accent_orange"
-                android:padding="15dp" />
+                android:padding="14dp" />
 
         </LinearLayout>
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</LinearLayout>

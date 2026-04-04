@@ -1,12 +1,15 @@
 package com.example.hotelbookingapp
 
+import android.app.Activity
 import android.content.Intent
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -16,15 +19,26 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private val viewModel: HotelListViewModel by viewModels()
+    private val authViewModel: AuthViewModel by viewModels()
 
     // ── Shake ─────────────────────────────────────────────────────────
     private lateinit var sensorManager: SensorManager
     private lateinit var shakeDetector: ShakeDetector
+
+    // ── AddHotel result launcher ──────────────────────────────────────
+    private val addHotelLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                // Reload the list to include the newly added hotel
+                viewModel.triggerReload()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,6 +87,17 @@ class MainActivity : AppCompatActivity() {
                 tvEmpty.isVisible      = state.isEmpty
                 recyclerView.isVisible = !state.isEmpty
             }
+        }
+
+        // ── FAB: only visible to HOST users ───────────────────────────
+        val fabAddHotel = findViewById<FloatingActionButton>(R.id.fabAddHotel)
+        if (authViewModel.isHost()) {
+            fabAddHotel.visibility = View.VISIBLE
+            fabAddHotel.setOnClickListener {
+                addHotelLauncher.launch(Intent(this, AddHotelActivity::class.java))
+            }
+        } else {
+            fabAddHotel.visibility = View.GONE
         }
 
         // ── Search ────────────────────────────────────────────────────
@@ -161,6 +186,8 @@ class MainActivity : AppCompatActivity() {
                 shakeDetector, accel, SensorManager.SENSOR_DELAY_UI
             )
         }
+        // Refresh list when returning from any sub-activity (e.g. after hotel added)
+        viewModel.triggerReload()
     }
 
     override fun onPause() {

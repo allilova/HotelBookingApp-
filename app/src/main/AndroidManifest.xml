@@ -23,7 +23,7 @@
         android:theme="@style/Theme.HotelBookingApp"
         android:localeConfig="@xml/locales_config">
 
-
+        <!-- Splash: portrait only -->
         <activity
             android:name=".SplashActivity"
             android:exported="true"
@@ -35,39 +35,64 @@
             </intent-filter>
         </activity>
 
+        <!-- Auth screens: portrait only (keyboard UX) -->
         <activity
             android:name=".LoginActivity"
             android:exported="false"
+            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".RegisterActivity"
             android:exported="false"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Main list: both orientations -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout" />
+
+        <!-- Hotel detail: supports landscape via res/layout-land/ -->
+        <activity
+            android:name=".HotelDetailActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout" />
+
+        <!-- Host screens: portrait (form UX) -->
+        <activity
+            android:name=".AddHotelActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".MyHotelsActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout" />
+
+        <!-- Profile & list screens: both orientations -->
+        <activity
             android:name=".UserProfileActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".HotelDetailActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ARViewActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout" />
 
         <activity
             android:name=".FavoritesActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout" />
 
         <activity
             android:name=".BookingHistoryActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout" />
+
+        <!-- AR: landscape for camera viewfinder -->
+        <activity
+            android:name=".ARViewActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
 
     </application>
 

@@ -51,7 +51,42 @@
                 android:orientation="vertical"
                 android:padding="24dp">
 
+                <!-- Role selector -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_role"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="8dp" />
 
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/toggleGroupRole"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
+
+                    <Button
+                        android:id="@+id/btnRoleGuest"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/role_guest" />
+
+                    <Button
+                        android:id="@+id/btnRoleHost"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/role_host" />
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                <!-- Full name -->
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
@@ -67,7 +102,7 @@
                         android:imeOptions="actionNext" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-
+                <!-- Email -->
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
@@ -84,7 +119,7 @@
                         android:imeOptions="actionNext" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-
+                <!-- Password -->
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
@@ -102,7 +137,7 @@
                         android:imeOptions="actionNext" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-
+                <!-- Confirm password -->
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
@@ -119,7 +154,6 @@
                         android:inputType="textPassword"
                         android:imeOptions="actionDone" />
                 </com.google.android.material.textfield.TextInputLayout>
-
 
                 <Button
                     android:id="@+id/btnRegister"
@@ -138,7 +172,6 @@
                     android:layout_gravity="center"
                     android:layout_marginTop="8dp"
                     android:visibility="gone" />
-
 
                 <TextView
                     android:id="@+id/tvGoToLogin"

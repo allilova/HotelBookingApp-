@@ -31,14 +31,17 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     private val _errorEvent = MutableSharedFlow<String>()
     val errorEvent: SharedFlow<String> = _errorEvent
 
-
-
     fun isLoggedIn(): Boolean = pref.getInt("logged_in_user_id", -1) != -1
 
     fun getLoggedInUserId(): Int = pref.getInt("logged_in_user_id", -1)
 
+    fun isHost(): Boolean = pref.getString("logged_in_user_role", UserRole.GUEST.name) == UserRole.HOST.name
+
     fun logout() {
-        pref.edit().remove("logged_in_user_id").apply()
+        pref.edit()
+            .remove("logged_in_user_id")
+            .remove("logged_in_user_role")
+            .apply()
     }
 
     fun getLoggedInUser(onResult: (User?) -> Unit) {
@@ -50,9 +53,13 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-
-
-    fun register(fullName: String, email: String, password: String, confirmPassword: String) {
+    fun register(
+        fullName: String,
+        email: String,
+        password: String,
+        confirmPassword: String,
+        role: UserRole = UserRole.GUEST
+    ) {
         if (fullName.isBlank() || email.isBlank() || password.isBlank()) {
             viewModelScope.launch { _errorEvent.emit("Всички полета са задължителни.") }
             return
@@ -79,7 +86,8 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
                     val user = User(
                         fullName     = fullName.trim(),
                         email        = email.trim().lowercase(),
-                        passwordHash = sha256(password)
+                        passwordHash = sha256(password),
+                        role         = role.name
                     )
                     val newId = db.userDao().insertUser(user)
                     DbResult.Success(user.copy(id = newId.toInt()))
@@ -89,7 +97,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
             }
             when (result) {
                 is DbResult.Success -> {
-                    saveSession(result.data.id)
+                    saveSession(result.data.id, result.data.role)
                     _authState.value = AuthState.Success(result.data)
                 }
                 is DbResult.Error -> {
@@ -99,7 +107,6 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
-
 
     fun login(email: String, password: String) {
         if (email.isBlank() || password.isBlank()) {
@@ -121,7 +128,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
             }
             when (result) {
                 is DbResult.Success -> {
-                    saveSession(result.data.id)
+                    saveSession(result.data.id, result.data.role)
                     _authState.value = AuthState.Success(result.data)
                 }
                 is DbResult.Error -> {
@@ -132,9 +139,11 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-
-    private fun saveSession(userId: Int) {
-        pref.edit().putInt("logged_in_user_id", userId).apply()
+    private fun saveSession(userId: Int, role: String) {
+        pref.edit()
+            .putInt("logged_in_user_id", userId)
+            .putString("logged_in_user_role", role)
+            .apply()
     }
 
     private fun sha256(input: String): String {

@@ -1,0 +1,142 @@
+package com.example.hotelbookingapp
+
+import android.app.Activity
+import android.content.Intent
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+class MyHotelsActivity : AppCompatActivity() {
+
+    private val authViewModel: AuthViewModel by viewModels()
+    private lateinit var adapter: MyHotelsAdapter
+
+    private val addHotelLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) refreshData()
+        }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_my_hotels)
+
+        supportActionBar?.apply {
+            title = getString(R.string.title_my_hotels)
+            setDisplayHomeAsUpEnabled(true)
+        }
+
+        val rv      = findViewById<RecyclerView>(R.id.rvMyHotels)
+        val tvEmpty = findViewById<TextView>(R.id.tvEmptyMyHotels)
+        val fab     = findViewById<FloatingActionButton>(R.id.fabAddHotelFromMyHotels)
+
+        rv.layoutManager = LinearLayoutManager(this)
+
+        adapter = MyHotelsAdapter(
+            list = emptyList(),
+            onDelete = { hotel -> confirmDelete(hotel) }
+        )
+        rv.adapter = adapter
+
+        fab.setOnClickListener {
+            addHotelLauncher.launch(Intent(this, AddHotelActivity::class.java))
+        }
+
+        refreshData()
+    }
+
+    private fun refreshData() {
+        val userId = authViewModel.getLoggedInUserId()
+        if (userId == -1) return
+        val db = DatabaseProvider.get(this)
+        lifecycleScope.launch {
+            val hotels = withContext(Dispatchers.IO) {
+                db.customHotelDao().getHotelsByOwner(userId)
+            }
+            val rv      = findViewById<RecyclerView>(R.id.rvMyHotels)
+            val tvEmpty = findViewById<TextView>(R.id.tvEmptyMyHotels)
+            if (hotels.isEmpty()) {
+                rv.visibility      = View.GONE
+                tvEmpty.visibility = View.VISIBLE
+            } else {
+                rv.visibility      = View.VISIBLE
+                tvEmpty.visibility = View.GONE
+                adapter.updateData(hotels)
+            }
+        }
+    }
+
+    private fun confirmDelete(hotel: CustomHotel) {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.delete_hotel_confirm_title))
+            .setMessage(getString(R.string.delete_hotel_confirm_msg, hotel.name))
+            .setPositiveButton(getString(R.string.btn_delete)) { _, _ ->
+                val db = DatabaseProvider.get(this)
+                lifecycleScope.launch {
+                    try {
+                        withContext(Dispatchers.IO) { db.customHotelDao().deleteHotel(hotel) }
+                        Toast.makeText(this@MyHotelsActivity,
+                            getString(R.string.delete_hotel_success), Toast.LENGTH_SHORT).show()
+                        refreshData()
+                    } catch (e: Exception) {
+                        Toast.makeText(this@MyHotelsActivity,
+                            getString(R.string.delete_hotel_error), Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+            .setNegativeButton(getString(R.string.btn_cancel), null)
+            .show()
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressedDispatcher.onBackPressed()
+        return true
+    }
+}
+
+// ── Adapter ───────────────────────────────────────────────────────────────────
+
+class MyHotelsAdapter(
+    private var list: List<CustomHotel>,
+    private val onDelete: (CustomHotel) -> Unit
+) : RecyclerView.Adapter<MyHotelsAdapter.VH>() {
+
+    class VH(view: View) : RecyclerView.ViewHolder(view) {
+        val tvName:   TextView    = view.findViewById(R.id.myHotelName)
+        val tvCity:   TextView    = view.findViewById(R.id.myHotelCity)
+        val tvPrice:  TextView    = view.findViewById(R.id.myHotelPrice)
+        val btnDelete: ImageButton = view.findViewById(R.id.btnDeleteMyHotel)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+        VH(LayoutInflater.from(parent.context).inflate(R.layout.item_my_hotel, parent, false))
+
+    override fun getItemCount() = list.size
+
+    override fun onBindViewHolder(holder: VH, position: Int) {
+        val h = list[position]
+        holder.tvName.text  = h.name
+        holder.tvCity.text  = h.city
+        holder.tvPrice.text = "${h.price} BGN / нощ"
+        holder.btnDelete.setOnClickListener { onDelete(h) }
+    }
+
+    fun updateData(newList: List<CustomHotel>) {
+        list = newList
+        notifyDataSetChanged()
+    }
+}

@@ -4,11 +4,14 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class SortOrder { NONE, PRICE_ASC, PRICE_DESC, RATING_DESC, RANDOM }
 
@@ -20,25 +23,42 @@ data class ListUiState(
 class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private var resourceContext: Context = app.applicationContext
+    private val db = DatabaseProvider.get(app)
 
     fun setResourceContext(context: Context) {
         resourceContext = context
-        _reload.value = !_reload.value
+        triggerReload()
     }
 
-    private fun loadHotels() = HotelRepository.getHotels(resourceContext)
-
-    private val _query     = MutableStateFlow("")
-    private val _sortOrder = MutableStateFlow(SortOrder.NONE)
-    private val _reload    = MutableStateFlow(false)
+    private val _query      = MutableStateFlow("")
+    private val _sortOrder  = MutableStateFlow(SortOrder.NONE)
+    private val _reloadFlag = MutableStateFlow(false)
 
     val query: StateFlow<String>        = _query
     val sortOrder: StateFlow<SortOrder> = _sortOrder
 
+    // Holds the full merged list (static + custom); reloaded when _reloadFlag changes
+    private val _allHotels = MutableStateFlow<List<Hotel>>(emptyList())
+
+    init {
+        triggerReload()
+    }
+
+    /** Reload from DB + static list on the IO thread, then update _allHotels. */
+    fun triggerReload() {
+        viewModelScope.launch {
+            val hotels = withContext(Dispatchers.IO) {
+                HotelRepository.getAllHotels(resourceContext, db)
+            }
+            _allHotels.value = hotels
+            _reloadFlag.value = !_reloadFlag.value
+        }
+    }
+
     val uiState: StateFlow<ListUiState> =
-        combine(_query, _sortOrder, _reload) { query, sort, _ ->
-            var list = if (query.isBlank()) loadHotels()
-            else loadHotels().filter {
+        combine(_query, _sortOrder, _allHotels) { query, sort, all ->
+            var list = if (query.isBlank()) all
+            else all.filter {
                 it.name.lowercase().contains(query.lowercase()) ||
                         it.city.lowercase().contains(query.lowercase())
             }
@@ -53,15 +73,14 @@ class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
-            ListUiState(loadHotels())
+            ListUiState()
         )
 
     fun onQueryChanged(q: String)       { _query.value     = q     }
     fun onSortChanged(order: SortOrder) { _sortOrder.value = order }
 
-
     fun shuffle() {
         _sortOrder.value = SortOrder.RANDOM
-        _reload.value = !_reload.value
+        _reloadFlag.value = !_reloadFlag.value
     }
 }

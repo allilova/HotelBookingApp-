@@ -36,8 +36,6 @@
 
     <string name="title_bookings">Booking history</string>
     <string name="no_bookings">You have no bookings yet.</string>
-    <!-- FIXED: both specifiers are now fully positional (%1$d and %2$.2f)
-         so Android never confuses the Int nights with the Double total. -->
     <string name="nights_total" formatted="false">%1$d night(s) — %2$.2f BGN</string>
     <string name="booked_at">Booked: %s</string>
 
@@ -66,6 +64,39 @@
 
     <string name="profile_joined">Registered on: %s</string>
 
+    <!-- Role selection -->
+    <string name="label_role">Register as:</string>
+    <string name="role_guest">Guest</string>
+    <string name="role_host">Host</string>
+    <string name="role_badge_guest">Guest</string>
+    <string name="role_badge_host">Host</string>
+
+    <!-- Add Hotel -->
+    <string name="add_hotel_title">Add a hotel</string>
+    <string name="add_hotel_subtitle">Fill in the details for your new listing</string>
+    <string name="hint_hotel_name">Hotel name</string>
+    <string name="hint_hotel_city">City</string>
+    <string name="hint_hotel_price">Price per night</string>
+    <string name="hint_hotel_desc">Description</string>
+    <string name="hint_hotel_image_url">Image URL (optional)</string>
+    <string name="hint_hotel_lat">Latitude</string>
+    <string name="hint_hotel_lon">Longitude</string>
+    <string name="btn_save_hotel">Save hotel</string>
+    <string name="add_hotel_success">Hotel added successfully!</string>
+    <string name="add_hotel_error">Failed to add the hotel.</string>
+    <string name="add_hotel_validation_error">Please fill in the required fields (name, city, price).</string>
+
+    <!-- My Hotels (HOST) -->
+    <string name="title_my_hotels">My Hotels</string>
+    <string name="no_my_hotels">You have no listings yet.\nTap + to add one.</string>
+    <string name="delete_hotel_confirm_title">Delete hotel</string>
+    <string name="delete_hotel_confirm_msg">Are you sure you want to delete "%s"?</string>
+    <string name="delete_hotel_success">Hotel deleted.</string>
+    <string name="delete_hotel_error">Failed to delete the hotel.</string>
+    <string name="btn_delete">Delete</string>
+    <string name="btn_cancel">Cancel</string>
+
+    <!-- Errors -->
     <string name="error_loading_bookings">Failed to load bookings.</string>
     <string name="error_loading_favorites">Failed to load favourites.</string>
     <string name="error_delete_favorite">Failed to delete favourite hotel.</string>
@@ -76,6 +107,7 @@
     <string name="error_notification">Failed to send notification.</string>
     <string name="error_save_booking">Failed to save booking.</string>
     <string name="error_toggle_favorite">Failed to update favourites.</string>
+    <string name="error_not_logged_in">You are not logged in.</string>
 
     <!-- Hotel data -->
     <string name="hotel_1_name">Grand Hotel Sofia</string>

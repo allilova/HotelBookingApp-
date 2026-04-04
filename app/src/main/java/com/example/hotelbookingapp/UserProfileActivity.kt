@@ -2,6 +2,7 @@ package com.example.hotelbookingapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.viewModels
@@ -22,17 +23,16 @@ class UserProfileActivity : AppCompatActivity() {
         val tvInitial   = findViewById<TextView>(R.id.tvProfileInitial)
         val tvJoined    = findViewById<TextView>(R.id.tvProfileJoined)
         val tvPoints    = findViewById<TextView>(R.id.tvProfilePoints)
+        val tvRoleBadge = findViewById<TextView>(R.id.tvProfileRoleBadge)
         val btnLogout   = findViewById<Button>(R.id.btnLogout)
         val btnFav      = findViewById<Button>(R.id.btnProfileFavorites)
         val btnBookings = findViewById<Button>(R.id.btnProfileBookings)
+        val btnMyHotels = findViewById<Button>(R.id.btnProfileMyHotels)
 
-        // Use a locale-aware date format so the month name also respects the
-        // currently active language.
         val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
         val sharedPref = getSharedPreferences("HotelAppPrefs", android.content.Context.MODE_PRIVATE)
         val points = sharedPref.getInt("user_points", 0)
-        // Use the string resource so the label is translated correctly.
         tvPoints.text = getString(R.string.bonus_points, points)
 
         viewModel.getLoggedInUser { user ->
@@ -41,8 +41,21 @@ class UserProfileActivity : AppCompatActivity() {
                 tvName.text    = user.fullName
                 tvEmail.text   = user.email
                 tvInitial.text = user.fullName.firstOrNull()?.uppercase() ?: "?"
-                // getString resolves from the active locale automatically.
                 tvJoined.text  = getString(R.string.profile_joined, sdf.format(Date(user.createdAt)))
+
+                // Role badge
+                val isHost = user.role == UserRole.HOST.name
+                tvRoleBadge.text = if (isHost)
+                    getString(R.string.role_badge_host)
+                else
+                    getString(R.string.role_badge_guest)
+                tvRoleBadge.setBackgroundColor(
+                    if (isHost) getColor(R.color.primary_blue)
+                    else        getColor(R.color.teal_available)
+                )
+
+                // "My Hotels" button only visible for HOSTs
+                btnMyHotels.visibility = if (isHost) View.VISIBLE else View.GONE
             }
         }
 
@@ -57,6 +70,10 @@ class UserProfileActivity : AppCompatActivity() {
 
         btnBookings.setOnClickListener {
             startActivity(Intent(this, BookingHistoryActivity::class.java))
+        }
+
+        btnMyHotels.setOnClickListener {
+            startActivity(Intent(this, MyHotelsActivity::class.java))
         }
     }
 

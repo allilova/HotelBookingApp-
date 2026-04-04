@@ -36,8 +36,6 @@
 
     <string name="title_bookings">История на резервации</string>
     <string name="no_bookings">Нямате направени резервации.</string>
-    <!-- FIXED: both specifiers are now fully positional (%1$d and %2$.2f)
-         so Android never confuses the Int nights with the Double total. -->
     <string name="nights_total" formatted="false">%1$d нощ/и — %2$.2f лв.</string>
     <string name="booked_at">Резервирано: %s</string>
 
@@ -66,6 +64,39 @@
 
     <string name="profile_joined">Регистриран на: %s</string>
 
+    <!-- Role selection -->
+    <string name="label_role">Регистрирай се като:</string>
+    <string name="role_guest">Гост</string>
+    <string name="role_host">Домакин</string>
+    <string name="role_badge_guest">Гост</string>
+    <string name="role_badge_host">Домакин</string>
+
+    <!-- Add Hotel -->
+    <string name="add_hotel_title">Добави хотел</string>
+    <string name="add_hotel_subtitle">Попълни данните за новия хотел</string>
+    <string name="hint_hotel_name">Име на хотела</string>
+    <string name="hint_hotel_city">Град</string>
+    <string name="hint_hotel_price">Цена на нощ</string>
+    <string name="hint_hotel_desc">Описание</string>
+    <string name="hint_hotel_image_url">URL на снимка (незадължително)</string>
+    <string name="hint_hotel_lat">Географска ширина</string>
+    <string name="hint_hotel_lon">Географска дължина</string>
+    <string name="btn_save_hotel">Запази хотела</string>
+    <string name="add_hotel_success">Хотелът е добавен успешно!</string>
+    <string name="add_hotel_error">Грешка при добавяне на хотела.</string>
+    <string name="add_hotel_validation_error">Моля, попълни задължителните полета (име, град, цена).</string>
+
+    <!-- My Hotels (HOST) -->
+    <string name="title_my_hotels">Моите хотели</string>
+    <string name="no_my_hotels">Все още нямате добавени хотели.\nНатиснете + за да добавите.</string>
+    <string name="delete_hotel_confirm_title">Изтрий хотел</string>
+    <string name="delete_hotel_confirm_msg">Сигурни ли сте, че искате да изтриете „%s"?</string>
+    <string name="delete_hotel_success">Хотелът е изтрит.</string>
+    <string name="delete_hotel_error">Грешка при изтриване на хотела.</string>
+    <string name="btn_delete">Изтрий</string>
+    <string name="btn_cancel">Отказ</string>
+
+    <!-- Errors -->
     <string name="error_loading_bookings">Грешка при зареждане на резервации.</string>
     <string name="error_loading_favorites">Грешка при зареждане на любими.</string>
     <string name="error_delete_favorite">Грешка при изтриване на любим хотел.</string>
@@ -76,6 +107,7 @@
     <string name="error_notification">Грешка при изпращане на известие.</string>
     <string name="error_save_booking">Грешка при запазване на резервация.</string>
     <string name="error_toggle_favorite">Грешка при обновяване на любими.</string>
+    <string name="error_not_logged_in">Не сте влезли в акаунт.</string>
 
     <!-- Hotel data -->
     <string name="hotel_1_name">Гранд Хотел София</string>
