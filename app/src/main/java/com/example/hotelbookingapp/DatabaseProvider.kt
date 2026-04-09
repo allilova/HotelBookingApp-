@@ -18,30 +18,23 @@ object DatabaseProvider {
         }
 
     private fun buildDatabase(context: Context): AppDatabase {
-        return try {
-            Room.databaseBuilder(
-                context.applicationContext,
-                AppDatabase::class.java,
-                DB_NAME
+        return Room.databaseBuilder(
+            context.applicationContext,
+            AppDatabase::class.java,
+            DB_NAME
+        )
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3,
+                AppDatabase.MIGRATION_3_4,
+                AppDatabase.MIGRATION_4_5,
+                AppDatabase.MIGRATION_5_6,
+                AppDatabase.MIGRATION_6_7
             )
-                .addMigrations(
-                    AppDatabase.MIGRATION_1_2,
-                    AppDatabase.MIGRATION_2_3,
-                    AppDatabase.MIGRATION_3_4,
-                    AppDatabase.MIGRATION_4_5,
-                    AppDatabase.MIGRATION_5_6,
-                    AppDatabase.MIGRATION_6_7
-                )
-                .fallbackToDestructiveMigration()
-                .build()
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to build database, retrying without migrations", e)
-            context.applicationContext.deleteDatabase(DB_NAME)
-            Room.databaseBuilder(
-                context.applicationContext,
-                AppDatabase::class.java,
-                DB_NAME
-            ).build()
-        }
+            // REMOVED fallbackToDestructiveMigration() — it was silently wiping the
+            // database whenever a migration was missing, which caused users and hotels
+            // to disappear on every app update. If a migration truly fails, Room will
+            // now throw an exception so the problem is visible rather than silent data loss.
+            .build()
     }
 }

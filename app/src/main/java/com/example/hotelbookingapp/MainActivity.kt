@@ -14,6 +14,8 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -27,15 +29,12 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: HotelListViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
 
-    // ── Shake ─────────────────────────────────────────────────────────
     private lateinit var sensorManager: SensorManager
     private lateinit var shakeDetector: ShakeDetector
 
-    // ── AddHotel result launcher ──────────────────────────────────────
     private val addHotelLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                // Reload the list to include the newly added hotel
                 viewModel.triggerReload()
             }
         }
@@ -43,6 +42,19 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // ── Apply status-bar inset so toolbar clears the status bar on all devices ──
+        val toolbarRow = findViewById<View>(R.id.toolbarRow)
+        ViewCompat.setOnApplyWindowInsetsListener(toolbarRow) { view, insets ->
+            val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            view.setPadding(
+                view.paddingLeft,
+                statusBarHeight + resources.getDimensionPixelSize(R.dimen.toolbar_top_padding),
+                view.paddingRight,
+                view.paddingBottom
+            )
+            insets
+        }
 
         viewModel.setResourceContext(this)
 
@@ -89,7 +101,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // ── FAB: only visible to HOST users ───────────────────────────
+        // ── FAB: only visible to HOST users ──────────────────────────
         val fabAddHotel = findViewById<FloatingActionButton>(R.id.fabAddHotel)
         if (authViewModel.isHost()) {
             fabAddHotel.visibility = View.VISIBLE
@@ -186,7 +198,6 @@ class MainActivity : AppCompatActivity() {
                 shakeDetector, accel, SensorManager.SENSOR_DELAY_UI
             )
         }
-        // Refresh list when returning from any sub-activity (e.g. after hotel added)
         viewModel.triggerReload()
     }
 

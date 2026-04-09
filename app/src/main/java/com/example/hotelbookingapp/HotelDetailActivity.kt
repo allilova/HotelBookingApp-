@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -23,7 +24,9 @@ import com.bumptech.glide.request.target.Target
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.DateValidatorPointForward
 import com.google.android.material.datepicker.MaterialDatePicker
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.Marker
@@ -62,13 +65,6 @@ class HotelDetailActivity : AppCompatActivity() {
         val lat       = intent.getDoubleExtra("HOTEL_LAT",       42.6977)
         val lon       = intent.getDoubleExtra("HOTEL_LON",       23.3219)
         val imageUrl  = intent.getStringExtra("HOTEL_IMAGE")
-
-        // Resolve hotel name/city/description from repository
-        // Works for both static hotels (id 1-999) and custom hotels (id >= 1000)
-        val hotel = resolveHotel(hotelId)
-        val name  = hotel?.name        ?: intent.getStringExtra("HOTEL_NAME") ?: ""
-        val city  = hotel?.city        ?: intent.getStringExtra("HOTEL_CITY") ?: ""
-        val desc  = hotel?.description ?: intent.getStringExtra("HOTEL_DESC") ?: ""
 
         // ── View references ──────────────────────────────────────────────────
         val detailImage    = findViewById<ImageView>(R.id.detailImage)
@@ -112,9 +108,7 @@ class HotelDetailActivity : AppCompatActivity() {
             })
             .into(detailImage)
 
-        // ── Basic UI ─────────────────────────────────────────────────────────
-        detailName.text = name
-        detailDesc.text = desc
+        // ── Basic UI (price/rating/availability don't need DB) ───────────────
         tvPrice.text    = getString(R.string.price_per_night, price)
         rbRating.rating = rating
         tvAvailability.text = getString(if (available) R.string.available else R.string.unavailable)
@@ -123,28 +117,92 @@ class HotelDetailActivity : AppCompatActivity() {
             else           getColor(R.color.red_unavailable)
         )
 
-        // ── Map ──────────────────────────────────────────────────────────────
-        setupMap(lat, lon, name)
-
-        // ── Location ─────────────────────────────────────────────────────────
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            == PackageManager.PERMISSION_GRANTED) {
-            locationViewModel.startTracking(this)
-        } else {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION),
-                REQUEST_LOCATION
-            )
-        }
+        // ── Resolve hotel name/city/description on IO thread (FIXES CRASH) ───
         lifecycleScope.launch {
-            locationViewModel.location.collect { userLoc ->
-                if (userLoc == null) return@collect
-                val km = locationViewModel.distanceKm(
-                    userLoc.latitude, userLoc.longitude, lat, lon
+            val hotel = withContext(Dispatchers.IO) { resolveHotel(hotelId) }
+            val name  = hotel?.name        ?: ""
+            val city  = hotel?.city        ?: ""
+            val desc  = hotel?.description ?: ""
+
+            detailName.text = name
+            detailDesc.text = desc
+
+            // ── Map ──────────────────────────────────────────────────────────
+            setupMap(lat, lon, name)
+
+            // ── Favourite ────────────────────────────────────────────────────
+            viewModel.loadFavouriteState(hotelId)
+
+            lifecycleScope.launch {
+                viewModel.isFavourite.collect { fav ->
+                    btnFav.setImageResource(
+                        if (fav) android.R.drawable.btn_star_big_on
+                        else     android.R.drawable.btn_star_big_off
+                    )
+                }
+            }
+
+            btnFav.setOnClickListener {
+                viewModel.toggleFavourite(
+                    FavoriteHotel(
+                        id       = hotelId,
+                        hotelId  = hotelId,
+                        name     = name,
+                        city     = city,
+                        imageUrl = imageUrl
+                    )
                 )
-                tvDistance.text = getString(R.string.distance_from_you, km)
+            }
+
+            // ── Booking ──────────────────────────────────────────────────────
+            btnBook.setOnClickListener {
+                if (checkInMs == null || checkOutMs == null) {
+                    Toast.makeText(this@HotelDetailActivity,
+                        getString(R.string.pick_dates_first), Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                viewModel.saveBooking(
+                    Booking(
+                        hotelId       = hotelId,
+                        hotelName     = name,
+                        hotelCity     = city,
+                        hotelImageUrl = imageUrl,
+                        checkIn       = sdf.format(Date(checkInMs!!)),
+                        checkOut      = sdf.format(Date(checkOutMs!!)),
+                        pricePerNight = price
+                    )
+                )
+            }
+
+            // ── AR ───────────────────────────────────────────────────────────
+            btnAR.setOnClickListener {
+                startActivity(android.content.Intent(this@HotelDetailActivity, ARViewActivity::class.java)
+                    .putExtra("HOTEL_NAME", name)
+                    .putExtra("HOTEL_LAT",  lat)
+                    .putExtra("HOTEL_LON",  lon))
+            }
+        }
+
+        // ── Observe booking result ───────────────────────────────────────────
+        lifecycleScope.launch {
+            viewModel.bookingSaved.collect { saved ->
+                if (saved) {
+                    val nights = ((checkOutMs!! - checkInMs!!) / (1000 * 60 * 60 * 24))
+                        .coerceAtLeast(1)
+                    // Get name for notification — read from UI
+                    val name = findViewById<TextView>(R.id.detailName).text.toString()
+                    sendNotification(name, nights, price)
+                    Toast.makeText(this@HotelDetailActivity,
+                        getString(R.string.booking_sent, name, nights),
+                        Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // ── Observe errors ───────────────────────────────────────────────────
+        lifecycleScope.launch {
+            viewModel.errorEvent.collect { message ->
+                Toast.makeText(this@HotelDetailActivity, message, Toast.LENGTH_LONG).show()
             }
         }
 
@@ -172,81 +230,31 @@ class HotelDetailActivity : AppCompatActivity() {
             }
         }
 
-        // ── Favourite ────────────────────────────────────────────────────────
-        viewModel.loadFavouriteState(hotelId)
-
-        lifecycleScope.launch {
-            viewModel.isFavourite.collect { fav ->
-                btnFav.setImageResource(
-                    if (fav) android.R.drawable.btn_star_big_on
-                    else     android.R.drawable.btn_star_big_off
-                )
-            }
-        }
-
-        btnFav.setOnClickListener {
-            viewModel.toggleFavourite(
-                FavoriteHotel(
-                    id       = hotelId,
-                    hotelId  = hotelId,
-                    name     = name,
-                    city     = city,
-                    imageUrl = imageUrl
-                )
+        // ── Location ─────────────────────────────────────────────────────────
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED) {
+            locationViewModel.startTracking(this)
+        } else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION),
+                REQUEST_LOCATION
             )
         }
-
-        // ── Booking ──────────────────────────────────────────────────────────
-        btnBook.setOnClickListener {
-            if (checkInMs == null || checkOutMs == null) {
-                Toast.makeText(this, getString(R.string.pick_dates_first),
-                    Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            viewModel.saveBooking(
-                Booking(
-                    hotelId       = hotelId,
-                    hotelName     = name,
-                    hotelCity     = city,
-                    hotelImageUrl = imageUrl,
-                    checkIn       = sdf.format(Date(checkInMs!!)),
-                    checkOut      = sdf.format(Date(checkOutMs!!)),
-                    pricePerNight = price
+        lifecycleScope.launch {
+            locationViewModel.location.collect { userLoc ->
+                if (userLoc == null) return@collect
+                val km = locationViewModel.distanceKm(
+                    userLoc.latitude, userLoc.longitude, lat, lon
                 )
-            )
-        }
-
-        // ── Observe booking result ───────────────────────────────────────────
-        lifecycleScope.launch {
-            viewModel.bookingSaved.collect { saved ->
-                if (saved) {
-                    val nights = ((checkOutMs!! - checkInMs!!) / (1000 * 60 * 60 * 24))
-                        .coerceAtLeast(1)
-                    sendNotification(name, nights, price)
-                    Toast.makeText(this@HotelDetailActivity,
-                        getString(R.string.booking_sent, name, nights),
-                        Toast.LENGTH_SHORT).show()
-                }
+                tvDistance.text = getString(R.string.distance_from_you, km)
             }
-        }
-
-        // ── Observe errors ───────────────────────────────────────────────────
-        lifecycleScope.launch {
-            viewModel.errorEvent.collect { message ->
-                Toast.makeText(this@HotelDetailActivity, message, Toast.LENGTH_LONG).show()
-            }
-        }
-
-        // ── AR ───────────────────────────────────────────────────────────────
-        btnAR.setOnClickListener {
-            startActivity(android.content.Intent(this, ARViewActivity::class.java)
-                .putExtra("HOTEL_NAME", name)
-                .putExtra("HOTEL_LAT",  lat)
-                .putExtra("HOTEL_LON",  lon))
         }
     }
 
     /**
+     * MUST be called from a background thread (IO dispatcher).
      * Resolves a Hotel object for any hotel ID — both static (1–999) and
      * custom / host-created (>= 1000).
      */
