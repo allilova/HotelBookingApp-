@@ -1,12 +1,12 @@
 plugins {
+    // Android application plugin - declared ONCE here, not in root build.gradle.kts
     alias(libs.plugins.android.application)
-    id("com.google.gms.google-services") version "4.4.4" apply false
-    // KSP is still needed for Room (we keep Room for FavoriteHotel)
+
+    // KSP - needed for Room annotation processing (FavoriteHotel stays local)
     id("com.google.devtools.ksp") version "2.3.5"
-    id("com.android.application")
-    id("com.google.gms.google-services")
-    // Google Services plugin must be applied here in the app module
-    // This plugin reads google-services.json and generates Firebase config
+
+    // Google Services - reads google-services.json and configures Firebase
+    // Must be LAST in the plugins block
     alias(libs.plugins.google.services)
 }
 
@@ -56,7 +56,7 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:${camerax_version}")
     implementation("androidx.camera:camera-view:${camerax_version}")
 
-    // ── Room (kept ONLY for FavoriteHotel - favorites are device-local) ───────
+    // ── Room (kept ONLY for FavoriteHotel - favorites stay device-local) ──────
     // Bookings, Users and CustomHotels move to Firestore in later phases
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
@@ -74,27 +74,19 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
     // ── Firebase ──────────────────────────────────────────────────────────────
-    // The BOM (Bill of Materials) must be declared as a platform dependency.
-    // It controls versions for ALL firebase-* libraries listed below,
-    // so we intentionally do NOT specify versions on the individual libraries.
+    // BOM controls all Firebase library versions - do NOT add versions to
+    // individual Firebase libraries below, the BOM manages them
     implementation(platform(libs.firebase.bom))
 
     // Firebase Authentication
-    // - Replaces our SHA-256 password hashing + UserDao + local user session in SharedPreferences
-    // - FirebaseAuth.currentUser persists the session automatically across app restarts
-    // - Email/password provider used (same as our current login flow, just handled by Firebase)
+    // Replaces our local SHA-256 + UserDao + SharedPreferences session
     implementation(libs.firebase.auth)
 
     // Firebase Firestore
-    // - Replaces Room for Booking and CustomHotel entities
-    // - Real-time sync: a host sees new bookings without refreshing, guests see status changes live
-    // - Offline persistence is enabled by default on Android (data cached locally)
+    // Replaces Room for Booking and CustomHotel - syncs across all devices
     implementation(libs.firebase.firestore)
 
     // Firebase Cloud Messaging
-    // - Sends push notifications to hosts when a guest makes a booking
-    // - Sends push notifications to guests when a host confirms or cancels their booking
-    // - FCM token for each user stored in Firestore users/{uid}/fcmToken
+    // Push notifications: host notified on new booking, guest notified on status change
     implementation(libs.firebase.messaging)
-    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
 }
