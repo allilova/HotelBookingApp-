@@ -101,15 +101,19 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // ── FAB: only visible to HOST users ──────────────────────────
+        // ── FAB: only visible to HOST users ──────────────────────────val fabAddHotel = findViewById<FloatingActionButton>(R.id.fabAddHotel)
         val fabAddHotel = findViewById<FloatingActionButton>(R.id.fabAddHotel)
-        if (authViewModel.isHost()) {
-            fabAddHotel.visibility = View.VISIBLE
-            fabAddHotel.setOnClickListener {
-                addHotelLauncher.launch(Intent(this, AddHotelActivity::class.java))
+        fabAddHotel.visibility = View.GONE // hidden by default until we know the role
+
+        authViewModel.checkIsHost { isHost ->
+            runOnUiThread {
+                if (isHost) {
+                    fabAddHotel.visibility = View.VISIBLE
+                    fabAddHotel.setOnClickListener {
+                        addHotelLauncher.launch(Intent(this, AddHotelActivity::class.java))
+                    }
+                }
             }
-        } else {
-            fabAddHotel.visibility = View.GONE
         }
 
         // ── Search ────────────────────────────────────────────────────
@@ -136,10 +140,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         // ── Points ────────────────────────────────────────────────────
-        val points = sharedPref.getInt("user_points", 0)
-        findViewById<TextView>(R.id.tvPoints).text = getString(R.string.bonus_points, points)
-        if (points >= 100) {
-            Toast.makeText(this, getString(R.string.vip_toast), Toast.LENGTH_LONG).show()
+        authViewModel.getLoggedInUser { user ->
+            val points = user?.points ?: 0
+            runOnUiThread {
+                findViewById<TextView>(R.id.tvPoints).text =
+                    getString(R.string.bonus_points, points)
+                if (points >= 100) {
+                    Toast.makeText(this, getString(R.string.vip_toast), Toast.LENGTH_LONG).show()
+                }
+            }
         }
 
         // ── Navigation buttons ────────────────────────────────────────

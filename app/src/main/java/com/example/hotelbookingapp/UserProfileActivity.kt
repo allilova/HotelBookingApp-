@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import java.text.SimpleDateFormat
@@ -31,9 +32,7 @@ class UserProfileActivity : AppCompatActivity() {
 
         val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
-        val sharedPref = getSharedPreferences("HotelAppPrefs", android.content.Context.MODE_PRIVATE)
-        val points = sharedPref.getInt("user_points", 0)
-        tvPoints.text = getString(R.string.bonus_points, points)
+        tvPoints.text = getString(R.string.bonus_points, 0)
 
         viewModel.getLoggedInUser { user ->
             runOnUiThread {
@@ -42,6 +41,16 @@ class UserProfileActivity : AppCompatActivity() {
                 tvEmail.text   = user.email
                 tvInitial.text = user.fullName.firstOrNull()?.uppercase() ?: "?"
                 tvJoined.text  = getString(R.string.profile_joined, sdf.format(Date(user.createdAt)))
+
+                // Points from Firestore
+                tvPoints.text = getString(R.string.bonus_points, user.points)
+                if (user.points >= 100) {
+                    Toast.makeText(
+                        this@UserProfileActivity,
+                        getString(R.string.vip_toast),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
 
                 // Role badge
                 val isHost = user.role == UserRole.HOST.name

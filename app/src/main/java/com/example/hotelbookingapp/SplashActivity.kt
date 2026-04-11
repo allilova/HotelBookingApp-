@@ -1,7 +1,6 @@
 package com.example.hotelbookingapp
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.animation.AnimationUtils
@@ -31,9 +30,16 @@ class SplashActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             delay(SPLASH_DELAY_MS)
-            val pref = getSharedPreferences("HotelAppPrefs", Context.MODE_PRIVATE)
-            val loggedIn = pref.getInt("logged_in_user_id", -1) != -1
-            val target = if (loggedIn) MainActivity::class.java else LoginActivity::class.java
+
+            // FirebaseAuth.currentUser is non-null if a user is already
+            // signed in (Firebase persists the session automatically).
+            // This replaces our old SharedPreferences "logged_in_user_id" check.
+            val target = if (FirebaseAuthManager.isLoggedIn) {
+                MainActivity::class.java
+            } else {
+                LoginActivity::class.java
+            }
+
             startActivity(Intent(this@SplashActivity, target))
             finish()
         }

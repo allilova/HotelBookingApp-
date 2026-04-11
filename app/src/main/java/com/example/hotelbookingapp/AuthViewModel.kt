@@ -1,153 +1,213 @@
 package com.example.hotelbookingapp
 
 import android.app.Application
-import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.security.MessageDigest
 
 sealed class AuthState {
-    object Idle : AuthState()
+    object Idle    : AuthState()
     object Loading : AuthState()
     data class Success(val user: User) : AuthState()
     data class Error(val message: String) : AuthState()
 }
 
+/**
+ * AuthViewModel manages the authentication UI state for LoginActivity
+ * and RegisterActivity.
+ *
+ * All Firebase Auth calls go through FirebaseAuthManager which handles
+ * the actual Firebase SDK interactions. AuthViewModel's job is to:
+ *  1. Validate input before calling FirebaseAuthManager
+ *  2. Translate Firebase exceptions into human-readable Bulgarian/English messages
+ *  3. Expose StateFlow and SharedFlow for the UI to observe
+ *
+ * Key difference from the old version:
+ *  - No more Room DB calls, no more SHA-256, no more SharedPreferences session
+ *  - Firebase persists the session automatically across app restarts
+ *  - isLoggedIn() now checks FirebaseAuth.currentUser instead of SharedPreferences
+ */
 class AuthViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val db   = DatabaseProvider.get(app)
-    private val pref = app.getSharedPreferences("HotelAppPrefs", Context.MODE_PRIVATE)
+    // All auth operations are delegated to FirebaseAuthManager
+    private val authManager = FirebaseAuthManager
+
+    // ── UI State ──────────────────────────────────────────────────────────────
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
-    private val _errorEvent = MutableSharedFlow<String>()
+    // SharedFlow for one-shot error events (Toast messages).
+    // replay = 0 means a new observer won't receive old errors.
+    private val _errorEvent = MutableSharedFlow<String>(replay = 0)
     val errorEvent: SharedFlow<String> = _errorEvent
 
-    fun isLoggedIn(): Boolean = pref.getInt("logged_in_user_id", -1) != -1
+    // ── Session checks ────────────────────────────────────────────────────────
 
-    fun getLoggedInUserId(): Int = pref.getInt("logged_in_user_id", -1)
+    /**
+     * Returns true if a Firebase user is currently signed in.
+     * FirebaseAuth persists the session to disk so this returns true
+     * even after the app is killed and restarted.
+     *
+     * Replaces: pref.getInt("logged_in_user_id", -1) != -1
+     */
+    fun isLoggedIn(): Boolean = authManager.isLoggedIn
 
-    fun isHost(): Boolean = pref.getString("logged_in_user_role", UserRole.GUEST.name) == UserRole.HOST.name
-
-    fun logout() {
-        pref.edit()
-            .remove("logged_in_user_id")
-            .remove("logged_in_user_role")
-            .apply()
-    }
-
-    fun getLoggedInUser(onResult: (User?) -> Unit) {
-        val id = getLoggedInUserId()
-        if (id == -1) { onResult(null); return }
+    /**
+     * Checks if the current user is a HOST by reading their Firestore profile.
+     * This is a suspend function — call it from a coroutine or use
+     * the isHostResult StateFlow pattern if you need it in the UI.
+     */
+    fun checkIsHost(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val user = withContext(Dispatchers.IO) { db.userDao().getUserById(id) }
-            onResult(user)
+            try {
+                onResult(authManager.isHost())
+            } catch (e: Exception) {
+                onResult(false)
+            }
         }
     }
 
+    // ── Registration ──────────────────────────────────────────────────────────
+
+    /**
+     * Validates registration input and then calls FirebaseAuthManager.register().
+     *
+     * Validation rules (same as before):
+     *  - All fields required
+     *  - Valid email format
+     *  - Password at least 6 characters (Firebase minimum)
+     *  - Passwords must match
+     *
+     * Firebase-specific errors caught:
+     *  - FirebaseAuthUserCollisionException: email already registered
+     *  - FirebaseAuthWeakPasswordException: password too weak
+     */
     fun register(
-        fullName: String,
-        email: String,
-        password: String,
+        fullName:        String,
+        email:           String,
+        password:        String,
         confirmPassword: String,
-        role: UserRole = UserRole.GUEST
+        role:            UserRole = UserRole.GUEST
     ) {
+        // ── Input validation ──────────────────────────────────────────────────
         if (fullName.isBlank() || email.isBlank() || password.isBlank()) {
-            viewModelScope.launch { _errorEvent.emit("Всички полета са задължителни.") }
+            emitError("Всички полета са задължителни.")
             return
         }
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            viewModelScope.launch { _errorEvent.emit("Невалиден имейл адрес.") }
+            emitError("Невалиден имейл адрес.")
             return
         }
         if (password.length < 6) {
-            viewModelScope.launch { _errorEvent.emit("Паролата трябва да е поне 6 символа.") }
+            emitError("Паролата трябва да е поне 6 символа.")
             return
         }
         if (password != confirmPassword) {
-            viewModelScope.launch { _errorEvent.emit("Паролите не съвпадат.") }
+            emitError("Паролите не съвпадат.")
             return
         }
 
         viewModelScope.launch {
             _authState.value = AuthState.Loading
-            val result = withContext(Dispatchers.IO) {
-                try {
-                    val existing = db.userDao().getUserByEmail(email.trim().lowercase())
-                    if (existing != null) return@withContext DbResult.Error("Имейлът вече е регистриран.")
-                    val user = User(
-                        fullName     = fullName.trim(),
-                        email        = email.trim().lowercase(),
-                        passwordHash = sha256(password),
-                        role         = role.name
-                    )
-                    val newId = db.userDao().insertUser(user)
-                    DbResult.Success(user.copy(id = newId.toInt()))
-                } catch (e: Exception) {
-                    DbResult.Error(e.localizedMessage ?: "Грешка при регистрация.")
+            try {
+                val user = authManager.register(fullName, email, password, role)
+                _authState.value = AuthState.Success(user)
+            } catch (e: Exception) {
+                _authState.value = AuthState.Idle
+                // Translate Firebase error codes to human-readable messages
+                val message = when (e) {
+                    is FirebaseAuthUserCollisionException ->
+                        "Имейлът вече е регистриран."
+                    is FirebaseAuthWeakPasswordException ->
+                        "Паролата е твърде слаба. Използвай поне 6 символа."
+                    else ->
+                        e.localizedMessage ?: "Грешка при регистрация."
                 }
-            }
-            when (result) {
-                is DbResult.Success -> {
-                    saveSession(result.data.id, result.data.role)
-                    _authState.value = AuthState.Success(result.data)
-                }
-                is DbResult.Error -> {
-                    _authState.value = AuthState.Idle
-                    _errorEvent.emit(result.message)
-                }
+                _errorEvent.emit(message)
             }
         }
     }
 
+    // ── Login ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Validates login input and then calls FirebaseAuthManager.login().
+     *
+     * Firebase-specific errors caught:
+     *  - FirebaseAuthInvalidUserException: no account with this email
+     *  - FirebaseAuthInvalidCredentialsException: wrong password
+     */
     fun login(email: String, password: String) {
         if (email.isBlank() || password.isBlank()) {
-            viewModelScope.launch { _errorEvent.emit("Въведи имейл и парола.") }
+            emitError("Въведи имейл и парола.")
             return
         }
+
         viewModelScope.launch {
             _authState.value = AuthState.Loading
-            val result = withContext(Dispatchers.IO) {
-                try {
-                    val user = db.userDao().getUserByEmail(email.trim().lowercase())
-                        ?: return@withContext DbResult.Error("Потребителят не е намерен.")
-                    if (user.passwordHash != sha256(password))
-                        return@withContext DbResult.Error("Грешна парола.")
-                    DbResult.Success(user)
-                } catch (e: Exception) {
-                    DbResult.Error(e.localizedMessage ?: "Грешка при вход.")
+            try {
+                val user = authManager.login(email, password)
+                _authState.value = AuthState.Success(user)
+            } catch (e: Exception) {
+                _authState.value = AuthState.Idle
+                val message = when (e) {
+                    is FirebaseAuthInvalidUserException ->
+                        "Потребителят не е намерен."
+                    is FirebaseAuthInvalidCredentialsException ->
+                        "Грешна парола."
+                    else ->
+                        e.localizedMessage ?: "Грешка при вход."
                 }
-            }
-            when (result) {
-                is DbResult.Success -> {
-                    saveSession(result.data.id, result.data.role)
-                    _authState.value = AuthState.Success(result.data)
-                }
-                is DbResult.Error -> {
-                    _authState.value = AuthState.Idle
-                    _errorEvent.emit(result.message)
-                }
+                _errorEvent.emit(message)
             }
         }
     }
 
-    private fun saveSession(userId: Int, role: String) {
-        pref.edit()
-            .putInt("logged_in_user_id", userId)
-            .putString("logged_in_user_role", role)
-            .apply()
+    // ── Logout ────────────────────────────────────────────────────────────────
+
+    /**
+     * Signs out the current user.
+     * FirebaseAuth clears the persisted session automatically.
+     */
+    fun logout() {
+        authManager.logout()
     }
 
-    private fun sha256(input: String): String {
-        val bytes = MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
-        return bytes.joinToString("") { "%02x".format(it) }
+    // ── User profile ──────────────────────────────────────────────────────────
+
+    /**
+     * Fetches the logged-in user's profile from Firestore asynchronously
+     * and delivers it via callback on the main thread.
+     *
+     * Used by UserProfileActivity to display name, email, role, points.
+     */
+    fun getLoggedInUser(onResult: (User?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val user = authManager.fetchCurrentUserProfile()
+                onResult(user)
+            } catch (e: Exception) {
+                onResult(null)
+            }
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Emits an error event from a non-coroutine context.
+     * Uses launch because MutableSharedFlow.emit() is a suspend function.
+     */
+    private fun emitError(message: String) {
+        viewModelScope.launch { _errorEvent.emit(message) }
     }
 }

@@ -49,8 +49,8 @@ class AddHotelActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val userId = authViewModel.getLoggedInUserId()
-            if (userId == -1) {
+            val userId = FirebaseAuthManager.currentUid
+            if (userId == null) {
                 Toast.makeText(this, getString(R.string.error_not_logged_in),
                     Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -65,7 +65,7 @@ class AddHotelActivity : AppCompatActivity() {
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                         db.customHotelDao().insertHotel(
                             CustomHotel(
-                                ownerUserId = userId,
+                                ownerUserId = 0,
                                 name        = name,
                                 city        = city,
                                 price       = price,
