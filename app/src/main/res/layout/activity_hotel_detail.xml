@@ -100,7 +100,70 @@
                 android:stepSize="0.5"
                 android:isIndicator="true"
                 android:progressTint="@color/accent_orange" />
+            <!-- ── Guest count section ─────────────────────────────────────────── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_guest_count"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_blue"
+                android:layout_marginBottom="6dp" />
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <!-- Minus button: reduces guest count, removes last name field -->
+                <ImageButton
+                    android:id="@+id/btnGuestMinus"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@android:drawable/ic_input_delete"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/cd_guest_minus"
+                    app:tint="@color/primary_blue" />
+
+                <!-- Current guest count display -->
+                <TextView
+                    android:id="@+id/tvGuestCount"
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="1"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary_blue" />
+
+                <!-- Plus button: increases guest count, adds a new name field -->
+                <ImageButton
+                    android:id="@+id/btnGuestPlus"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@android:drawable/ic_input_add"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/cd_guest_plus"
+                    app:tint="@color/primary_blue" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/label_guests"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary" />
+            </LinearLayout>
+
+            <!-- Dynamic container: one TextInputLayout per guest added here by code -->
+            <LinearLayout
+                android:id="@+id/containerGuestNames"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="12dp" />
             <!-- Description -->
             <TextView
                 android:id="@+id/detailDescription"

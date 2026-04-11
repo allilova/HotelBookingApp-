@@ -10,20 +10,16 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MyHotelsActivity : AppCompatActivity() {
 
-    private val authViewModel: AuthViewModel by viewModels()
     private lateinit var adapter: MyHotelsAdapter
 
     private val addHotelLauncher =
@@ -47,7 +43,7 @@ class MyHotelsActivity : AppCompatActivity() {
         rv.layoutManager = LinearLayoutManager(this)
 
         adapter = MyHotelsAdapter(
-            list = emptyList(),
+            list     = emptyList(),
             onDelete = { hotel -> confirmDelete(hotel) }
         )
         rv.adapter = adapter
@@ -59,42 +55,67 @@ class MyHotelsActivity : AppCompatActivity() {
         refreshData()
     }
 
+    /**
+     * Loads the current host's hotels from Firestore.
+     * Uses FirebaseAuthManager.currentUid to identify the host.
+     */
     private fun refreshData() {
-        val userId = authViewModel.getLoggedInUserId()
-        if (userId == -1) return
-        val db = DatabaseProvider.get(this)
+        val uid = FirebaseAuthManager.currentUid
+        if (uid == null) return
+
+        val rv      = findViewById<RecyclerView>(R.id.rvMyHotels)
+        val tvEmpty = findViewById<TextView>(R.id.tvEmptyMyHotels)
+
         lifecycleScope.launch {
-            val hotels = withContext(Dispatchers.IO) {
-                db.customHotelDao().getHotelsByOwner(userId)
-            }
-            val rv      = findViewById<RecyclerView>(R.id.rvMyHotels)
-            val tvEmpty = findViewById<TextView>(R.id.tvEmptyMyHotels)
-            if (hotels.isEmpty()) {
+            try {
+                // Query Firestore for hotels WHERE ownerUserId == currentUid
+                val hotels = CustomHotelRepository.getHotelsByOwner(uid)
+
+                if (hotels.isEmpty()) {
+                    rv.visibility      = View.GONE
+                    tvEmpty.visibility = View.VISIBLE
+                } else {
+                    rv.visibility      = View.VISIBLE
+                    tvEmpty.visibility = View.GONE
+                    adapter.updateData(hotels)
+                }
+            } catch (e: Exception) {
                 rv.visibility      = View.GONE
                 tvEmpty.visibility = View.VISIBLE
-            } else {
-                rv.visibility      = View.VISIBLE
-                tvEmpty.visibility = View.GONE
-                adapter.updateData(hotels)
+                Toast.makeText(
+                    this@MyHotelsActivity,
+                    getString(R.string.delete_hotel_error),
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
 
+    /**
+     * Shows a confirmation dialog before deleting a hotel.
+     * If confirmed, deletes the hotel from Firestore by its firestoreId.
+     */
     private fun confirmDelete(hotel: CustomHotel) {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.delete_hotel_confirm_title))
             .setMessage(getString(R.string.delete_hotel_confirm_msg, hotel.name))
             .setPositiveButton(getString(R.string.btn_delete)) { _, _ ->
-                val db = DatabaseProvider.get(this)
                 lifecycleScope.launch {
                     try {
-                        withContext(Dispatchers.IO) { db.customHotelDao().deleteHotel(hotel) }
-                        Toast.makeText(this@MyHotelsActivity,
-                            getString(R.string.delete_hotel_success), Toast.LENGTH_SHORT).show()
+                        // Delete by Firestore document ID — no Room involved
+                        CustomHotelRepository.deleteHotel(hotel.firestoreId)
+                        Toast.makeText(
+                            this@MyHotelsActivity,
+                            getString(R.string.delete_hotel_success),
+                            Toast.LENGTH_SHORT
+                        ).show()
                         refreshData()
                     } catch (e: Exception) {
-                        Toast.makeText(this@MyHotelsActivity,
-                            getString(R.string.delete_hotel_error), Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this@MyHotelsActivity,
+                            getString(R.string.delete_hotel_error),
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             }
@@ -110,20 +131,26 @@ class MyHotelsActivity : AppCompatActivity() {
 
 // ── Adapter ───────────────────────────────────────────────────────────────────
 
+/**
+ * Adapter for the host's "My Hotels" list.
+ * Shows hotel name, city, price, and a delete button.
+ * Now works with CustomHotel from Firestore instead of Room.
+ */
 class MyHotelsAdapter(
     private var list: List<CustomHotel>,
     private val onDelete: (CustomHotel) -> Unit
 ) : RecyclerView.Adapter<MyHotelsAdapter.VH>() {
 
     class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvName:   TextView    = view.findViewById(R.id.myHotelName)
-        val tvCity:   TextView    = view.findViewById(R.id.myHotelCity)
-        val tvPrice:  TextView    = view.findViewById(R.id.myHotelPrice)
+        val tvName:    TextView    = view.findViewById(R.id.myHotelName)
+        val tvCity:    TextView    = view.findViewById(R.id.myHotelCity)
+        val tvPrice:   TextView    = view.findViewById(R.id.myHotelPrice)
         val btnDelete: ImageButton = view.findViewById(R.id.btnDeleteMyHotel)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-        VH(LayoutInflater.from(parent.context).inflate(R.layout.item_my_hotel, parent, false))
+        VH(LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_my_hotel, parent, false))
 
     override fun getItemCount() = list.size
 

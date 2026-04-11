@@ -1,17 +1,27 @@
 package com.example.hotelbookingapp
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "bookings")
+
 data class Booking(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val hotelId: Int,              // used to re-resolve name/city in the active locale
-    val hotelName: String,         // kept as fallback only
-    val hotelCity: String,         // kept as fallback only
-    val hotelImageUrl: String?,
-    val checkIn: String,           // stored as "dd/MM/yyyy"
-    val checkOut: String,
-    val pricePerNight: Double,
-    val bookedAt: Long = System.currentTimeMillis()
+    val firestoreId:   String = "",
+    val hotelId:       Int    = 0,
+    val hotelName:     String = "",
+    val hotelCity:     String = "",
+    val hotelImageUrl: String = "",
+    val checkIn:       String = "",
+    val checkOut:      String = "",
+    val pricePerNight: Double = 0.0,
+    val guestCount:    Int          = 1,
+    val guestNames:    List<String> = emptyList(),
+    val guestUserId:   String = "",
+    val guestUserName: String = "",
+    val hostUserId:    String = "",
+    val status:        String = BookingStatus.PENDING.name,
+    val bookedAt:      Long   = System.currentTimeMillis()
 )
+
+enum class BookingStatus {
+    PENDING,    // Created by guest, waiting for host action
+    CONFIRMED,  // Host has confirmed the booking
+    CANCELLED   // Cancelled by either guest or host
+}

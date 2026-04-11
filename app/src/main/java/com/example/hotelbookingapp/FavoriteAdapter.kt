@@ -32,11 +32,19 @@ class FavoriteAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val hotel = list[position]
 
-        // Use resolve() which handles both new records (hotelId > 0) and old
-        // records (hotelId = 0) by matching the saved name across all locales.
-        val resolved = HotelRepository.resolve(activityContext, hotel.hotelId, hotel.name)
-        holder.name.text = resolved?.name ?: hotel.name
-        holder.city.text = resolved?.city ?: hotel.city
+        // Set fallback values immediately so the item is not blank while loading
+        holder.name.text = hotel.name
+        holder.city.text = hotel.city
+
+        // Resolve the current locale name in a coroutine because resolve()
+        // may hit Firestore for custom hotels
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            val resolved = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                HotelRepository.resolve(activityContext, hotel.hotelId, hotel.name)
+            }
+            holder.name.text = resolved?.name ?: hotel.name
+            holder.city.text = resolved?.city ?: hotel.city
+        }
 
         Glide.with(activityContext)
             .load(hotel.imageUrl)
@@ -46,7 +54,6 @@ class FavoriteAdapter(
 
         holder.deleteBtn.setOnClickListener { onDeleteClick(hotel) }
     }
-
     override fun getItemCount() = list.size
 
     fun updateData(newList: List<FavoriteHotel>) {

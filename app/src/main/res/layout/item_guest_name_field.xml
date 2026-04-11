@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Reusable layout for a single guest name input field.
+    Inflated dynamically in HotelDetailActivity for each guest.
+    The hint is set programmatically to "Гост 1", "Гост 2", etc.
+-->
+<com.google.android.material.textfield.TextInputLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/tilGuestName"
+    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    app:startIconDrawable="@android:drawable/ic_menu_myplaces">
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/etGuestName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName|textCapWords"
+        android:imeOptions="actionNext" />
+
+</com.google.android.material.textfield.TextInputLayout>

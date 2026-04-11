@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // ── Apply status-bar inset so toolbar clears the status bar on all devices ──
+        // ── Apply status-bar inset so toolbar clears the status bar ──
         val toolbarRow = findViewById<View>(R.id.toolbarRow)
         ViewCompat.setOnApplyWindowInsetsListener(toolbarRow) { view, insets ->
             val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
@@ -74,16 +74,20 @@ class MainActivity : AppCompatActivity() {
         val recyclerView = findViewById<RecyclerView>(R.id.rvHotels)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
+        // КОРИГИРАНО: Логиката за клик е затворена правилно
         val adapter = HotelAdapter { hotel, sharedImageView ->
             val intent = Intent(this, HotelDetailActivity::class.java).apply {
-                putExtra("HOTEL_ID",        hotel.id)
-                putExtra("HOTEL_PRICE",     hotel.price)
-                putExtra("HOTEL_RATING",    hotel.rating)
-                putExtra("HOTEL_AVAILABLE", hotel.isAvailable)
-                putExtra("HOTEL_LAT",       hotel.latitude)
-                putExtra("HOTEL_LON",       hotel.longitude)
-                putExtra("HOTEL_IMAGE",     hotel.imageUrl)
+                putExtra("HOTEL_ID",           hotel.id)
+                putExtra("HOTEL_PRICE",        hotel.price)
+                putExtra("HOTEL_RATING",       hotel.rating)
+                putExtra("HOTEL_AVAILABLE",    hotel.isAvailable)
+                putExtra("HOTEL_LAT",          hotel.latitude)
+                putExtra("HOTEL_LON",          hotel.longitude)
+                putExtra("HOTEL_IMAGE",        hotel.imageUrl)
+                putExtra("HOTEL_FIRESTORE_ID", hotel.firestoreId)
+                putExtra("HOST_USER_ID",       hotel.ownerUserId)
             }
+
             val options = androidx.core.app.ActivityOptionsCompat.makeSceneTransitionAnimation(
                 this, sharedImageView, "hotelImageTransition"
             )
@@ -101,9 +105,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // ── FAB: only visible to HOST users ──────────────────────────val fabAddHotel = findViewById<FloatingActionButton>(R.id.fabAddHotel)
+        // ── FAB: only visible to HOST users ──────────────────────────
         val fabAddHotel = findViewById<FloatingActionButton>(R.id.fabAddHotel)
-        fabAddHotel.visibility = View.GONE // hidden by default until we know the role
+        fabAddHotel.visibility = View.GONE // hidden by default
 
         authViewModel.checkIsHost { isHost ->
             runOnUiThread {
@@ -178,6 +182,7 @@ class MainActivity : AppCompatActivity() {
                 AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
             sharedPref.edit().putInt("night_mode", newMode).apply()
             AppCompatDelegate.setDefaultNightMode(newMode)
+            updateThemeIcon() // Обновяваме иконата веднага след клик
         }
 
         // ── Language ──────────────────────────────────────────────────

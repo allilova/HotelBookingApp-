@@ -5,34 +5,15 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-/**
- * Room database — after Phase 2 this only contains:
- *  - FavoriteHotel  (stays local — personal device preference)
- *  - Booking        (will move to Firestore in Phase 3)
- *  - CustomHotel    (will move to Firestore in Phase 4)
- *
- * User has been removed because authentication and user profiles
- * are now managed by Firebase Auth + Firestore.
- *
- * Version history:
- *  1 → 2: Added imageUrl to favorite_hotels
- *  2 → 3: Added bookings table
- *  3 → 4: Added users table (NOW REMOVED in version 8)
- *  4 → 5: Added hotelId to favorite_hotels and bookings
- *  5 → 6: Added role column to users
- *  6 → 7: Added custom_hotels table
- *  7 → 8: Dropped users table (moved to Firestore)
- */
 @Database(
-    entities = [FavoriteHotel::class, Booking::class, CustomHotel::class],
-    version = 8,
+    entities = [FavoriteHotel::class, CustomHotel::class],
+    version = 9,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun hotelDao(): HotelDao
-    abstract fun bookingDao(): BookingDao
     abstract fun customHotelDao(): CustomHotelDao
-    // userDao() removed — use FirebaseAuthManager instead
+
 
     companion object {
 
@@ -114,18 +95,16 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        /**
-         * Migration 7 → 8: Drop the local users table.
-         * Users are now authenticated via Firebase Auth and their profiles
-         * are stored in Firestore. The local users table is no longer needed.
-         *
-         * We keep all previous migrations (1-7) so that users upgrading
-         * from any older version of the app go through each migration
-         * step in order without losing their favorites or bookings.
-         */
         val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("DROP TABLE IF EXISTS users")
+            }
+        }
+
+
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS bookings")
             }
         }
     }

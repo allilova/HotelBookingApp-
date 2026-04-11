@@ -17,13 +17,12 @@ enum class SortOrder { NONE, PRICE_ASC, PRICE_DESC, RATING_DESC, RANDOM }
 
 data class ListUiState(
     val hotels: List<Hotel> = emptyList(),
-    val isEmpty: Boolean = false
+    val isEmpty: Boolean    = false
 )
 
 class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private var resourceContext: Context = app.applicationContext
-    private val db = DatabaseProvider.get(app)
 
     fun setResourceContext(context: Context) {
         resourceContext = context
@@ -32,26 +31,43 @@ class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private val _query      = MutableStateFlow("")
     private val _sortOrder  = MutableStateFlow(SortOrder.NONE)
-    private val _reloadFlag = MutableStateFlow(false)
+    private val _allHotels  = MutableStateFlow<List<Hotel>>(emptyList())
 
-    val query: StateFlow<String>        = _query
-    val sortOrder: StateFlow<SortOrder> = _sortOrder
-
-    // Holds the full merged list (static + custom); reloaded when _reloadFlag changes
-    private val _allHotels = MutableStateFlow<List<Hotel>>(emptyList())
+    val query:     StateFlow<String>     = _query
+    val sortOrder: StateFlow<SortOrder>  = _sortOrder
 
     init {
         triggerReload()
     }
 
-    /** Reload from DB + static list on the IO thread, then update _allHotels. */
+    /**
+     * Reloads the full hotel list from:
+     *  1. Static hotels (hardcoded in HotelRepository)
+     *  2. Custom hotels from Firestore (CustomHotelRepository)
+     *
+     * Must be called after a host adds or deletes a hotel so the
+     * main list reflects the change immediately.
+     *
+     * Runs on Dispatchers.IO because Firestore .get().await() is a
+     * network call that must not block the main thread.
+     */
     fun triggerReload() {
         viewModelScope.launch {
-            val hotels = withContext(Dispatchers.IO) {
-                HotelRepository.getAllHotels(resourceContext, db)
+            try {
+                val hotels = withContext(Dispatchers.IO) {
+                    // HotelRepository.getAllHotels() is now a suspend function
+                    // that fetches Firestore custom hotels internally
+                    HotelRepository.getAllHotels(resourceContext)
+                }
+                _allHotels.value = hotels
+            } catch (e: Exception) {
+                // If Firestore is unavailable (no network), keep whatever
+                // hotels we already have. Static hotels always load because
+                // they come from string resources, not the network.
+                if (_allHotels.value.isEmpty()) {
+                    _allHotels.value = HotelRepository.getStaticHotels(resourceContext)
+                }
             }
-            _allHotels.value = hotels
-            _reloadFlag.value = !_reloadFlag.value
         }
     }
 
@@ -81,6 +97,6 @@ class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
 
     fun shuffle() {
         _sortOrder.value = SortOrder.RANDOM
-        _reloadFlag.value = !_reloadFlag.value
+        triggerReload()
     }
 }

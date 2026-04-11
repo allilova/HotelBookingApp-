@@ -121,4 +121,25 @@
     <string name="hotel_3_name">Морска Звезда</string>
     <string name="hotel_3_city">Варна</string>
     <string name="hotel_3_desc">Прекрасна гледка към морето.</string>
+    <!-- Guest count + names -->
+    <string name="label_guest_count">Брой гости</string>
+    <string name="label_guests">гост/и</string>
+    <string name="guest_name_hint">Гост %d</string>
+    <string name="guest_name_fallback">Гост %d</string>
+    <string name="cd_guest_minus">Намали брой гости</string>
+    <string name="cd_guest_plus">Увеличи брой гости</string>
+    <string name="booking_guests_display">%1$d гост/и: %2$s</string>
+
+    <!-- Booking status labels -->
+    <string name="status_pending">⏳ Изчакване</string>
+    <string name="status_confirmed">✓ Потвърдена</string>
+    <string name="status_cancelled">✗ Отказана</string>
+
+    <!-- Booking cancel -->
+    <string name="cancel_booking_title">Откажи резервация</string>
+    <string name="cancel_booking_msg">Сигурни ли сте, че искате да откажете резервацията за „%s"?</string>
+    <string name="btn_cancel_booking">Откажи</string>
+    <string name="btn_confirm_cancel">Да, откажи</string>
+    <string name="booking_cancelled_success">Резервацията е отказана.</string>
+    <string name="error_cancel_booking">Грешка при отказване на резервация.</string>
 </resources>

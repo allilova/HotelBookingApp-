@@ -5,15 +5,12 @@ import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 
 class AddHotelActivity : AppCompatActivity() {
-
-    private val authViewModel: AuthViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,65 +21,78 @@ class AddHotelActivity : AppCompatActivity() {
             setDisplayHomeAsUpEnabled(true)
         }
 
-        val etName        = findViewById<TextInputEditText>(R.id.etHotelName)
-        val etCity        = findViewById<TextInputEditText>(R.id.etHotelCity)
-        val etPrice       = findViewById<TextInputEditText>(R.id.etHotelPrice)
-        val etDesc        = findViewById<TextInputEditText>(R.id.etHotelDesc)
-        val etImageUrl    = findViewById<TextInputEditText>(R.id.etHotelImageUrl)
-        val etLat         = findViewById<TextInputEditText>(R.id.etHotelLat)
-        val etLon         = findViewById<TextInputEditText>(R.id.etHotelLon)
-        val btnSave       = findViewById<Button>(R.id.btnSaveHotel)
-        val progress      = findViewById<ProgressBar>(R.id.addHotelProgress)
+        val etName     = findViewById<TextInputEditText>(R.id.etHotelName)
+        val etCity     = findViewById<TextInputEditText>(R.id.etHotelCity)
+        val etPrice    = findViewById<TextInputEditText>(R.id.etHotelPrice)
+        val etDesc     = findViewById<TextInputEditText>(R.id.etHotelDesc)
+        val etImageUrl = findViewById<TextInputEditText>(R.id.etHotelImageUrl)
+        val etLat      = findViewById<TextInputEditText>(R.id.etHotelLat)
+        val etLon      = findViewById<TextInputEditText>(R.id.etHotelLon)
+        val btnSave    = findViewById<Button>(R.id.btnSaveHotel)
+        val progress   = findViewById<ProgressBar>(R.id.addHotelProgress)
 
         btnSave.setOnClickListener {
-            val name  = etName.text.toString().trim()
-            val city  = etCity.text.toString().trim()
-            val price = etPrice.text.toString().toDoubleOrNull()
-            val desc  = etDesc.text.toString().trim()
+            val name   = etName.text.toString().trim()
+            val city   = etCity.text.toString().trim()
+            val price  = etPrice.text.toString().toDoubleOrNull()
+            val desc   = etDesc.text.toString().trim()
             val imgUrl = etImageUrl.text.toString().trim()
-            val lat   = etLat.text.toString().toDoubleOrNull() ?: 42.6977
-            val lon   = etLon.text.toString().toDoubleOrNull() ?: 23.3219
+            val lat    = etLat.text.toString().toDoubleOrNull() ?: 42.6977
+            val lon    = etLon.text.toString().toDoubleOrNull() ?: 23.3219
 
+            // Validate required fields
             if (name.isBlank() || city.isBlank() || price == null) {
-                Toast.makeText(this, getString(R.string.add_hotel_validation_error),
-                    Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.add_hotel_validation_error),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
 
-            val userId = FirebaseAuthManager.currentUid
-            if (userId == null) {
-                Toast.makeText(this, getString(R.string.error_not_logged_in),
-                    Toast.LENGTH_SHORT).show()
+            // Get the Firebase UID of the currently logged-in host
+            val ownerUid = FirebaseAuthManager.currentUid
+            if (ownerUid == null) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_not_logged_in),
+                    Toast.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
 
             progress.visibility = View.VISIBLE
             btnSave.isEnabled   = false
 
-            val db = DatabaseProvider.get(this)
             lifecycleScope.launch {
                 try {
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        db.customHotelDao().insertHotel(
-                            CustomHotel(
-                                ownerUserId = 0,
-                                name        = name,
-                                city        = city,
-                                price       = price,
-                                description = desc,
-                                imageUrl    = imgUrl,
-                                latitude    = lat,
-                                longitude   = lon
-                            )
+                    // Save to Firestore via CustomHotelRepository.
+                    // ownerUserId is now a String (Firebase UID) instead of Int.
+                    CustomHotelRepository.createHotel(
+                        CustomHotel(
+                            ownerUserId = ownerUid,  // ← Firebase UID, not Room integer
+                            name        = name,
+                            city        = city,
+                            price       = price,
+                            description = desc,
+                            imageUrl    = imgUrl,
+                            latitude    = lat,
+                            longitude   = lon
                         )
-                    }
-                    Toast.makeText(this@AddHotelActivity,
-                        getString(R.string.add_hotel_success), Toast.LENGTH_SHORT).show()
+                    )
+                    Toast.makeText(
+                        this@AddHotelActivity,
+                        getString(R.string.add_hotel_success),
+                        Toast.LENGTH_SHORT
+                    ).show()
                     setResult(RESULT_OK)
                     finish()
                 } catch (e: Exception) {
-                    Toast.makeText(this@AddHotelActivity,
-                        getString(R.string.add_hotel_error), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this@AddHotelActivity,
+                        getString(R.string.add_hotel_error),
+                        Toast.LENGTH_LONG
+                    ).show()
                 } finally {
                     progress.visibility = View.GONE
                     btnSave.isEnabled   = true

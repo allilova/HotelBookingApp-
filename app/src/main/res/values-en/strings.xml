@@ -121,4 +121,25 @@
     <string name="hotel_3_name">Sea Star</string>
     <string name="hotel_3_city">Varna</string>
     <string name="hotel_3_desc">A wonderful view of the sea.</string>
+    <!-- Guest count + names -->
+    <string name="label_guest_count">Number of guests</string>
+    <string name="label_guests">guest(s)</string>
+    <string name="guest_name_hint">Guest %d</string>
+    <string name="guest_name_fallback">Guest %d</string>
+    <string name="cd_guest_minus">Decrease guest count</string>
+    <string name="cd_guest_plus">Increase guest count</string>
+    <string name="booking_guests_display">%1$d guest(s): %2$s</string>
+
+    <!-- Booking status labels -->
+    <string name="status_pending">⏳ Pending</string>
+    <string name="status_confirmed">✓ Confirmed</string>
+    <string name="status_cancelled">✗ Cancelled</string>
+
+    <!-- Booking cancel -->
+    <string name="cancel_booking_title">Cancel booking</string>
+    <string name="cancel_booking_msg">Are you sure you want to cancel the booking for "%s"?</string>
+    <string name="btn_cancel_booking">Cancel booking</string>
+    <string name="btn_confirm_cancel">Yes, cancel</string>
+    <string name="booking_cancelled_success">Booking has been cancelled.</string>
+    <string name="error_cancel_booking">Failed to cancel booking.</string>
 </resources>
