@@ -10,7 +10,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Header banner -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="180dp"
@@ -45,7 +44,6 @@
             </com.google.android.material.card.MaterialCardView>
         </FrameLayout>
 
-        <!-- Info card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -88,7 +86,6 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="13sp" />
 
-                <!-- Role badge -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -109,7 +106,6 @@
                         android:background="@color/teal_available" />
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Bonus points badge -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -131,7 +127,6 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Actions card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -182,7 +177,6 @@
                     android:background="@color/gray_bg"
                     android:layout_marginHorizontal="16dp" />
 
-                <!-- Visible only for HOST users; hidden in UserProfileActivity for GUESTs -->
                 <Button
                     android:id="@+id/btnProfileMyHotels"
                     style="@style/Widget.Material3.Button.TextButton"
@@ -195,6 +189,25 @@
                     android:visibility="gone"
                     app:icon="@android:drawable/ic_menu_myplaces"
                     app:iconTint="@color/primary_blue" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/gray_bg"
+                    android:layout_marginHorizontal="16dp" />
+
+                <Button
+                    android:id="@+id/btnProfileHostBookings"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/title_host_bookings"
+                    android:drawablePadding="12dp"
+                    android:gravity="start|center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:visibility="gone"
+                    app:icon="@android:drawable/ic_menu_agenda"
+                    app:iconTint="@color/accent_orange" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

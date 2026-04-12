@@ -142,4 +142,21 @@
     <string name="btn_confirm_cancel">Да, откажи</string>
     <string name="booking_cancelled_success">Резервацията е отказана.</string>
     <string name="error_cancel_booking">Грешка при отказване на резервация.</string>
+    <!-- Host bookings screen -->
+    <string name="title_host_bookings">Заявки за резервации</string>
+    <string name="no_host_bookings">Все още нямате заявки за резервации.</string>
+    <string name="pending_count_zero">Няма чакащи резервации</string>
+    <string name="pending_count">%d резервация/и чакат потвърждение</string>
+
+    <!-- Host booking actions -->
+    <string name="btn_confirm_booking">Потвърди</string>
+    <string name="confirm_booking_dialog_title">Потвърди резервация</string>
+    <string name="confirm_booking_dialog_msg">Да потвърдите ли резервацията на %1$s за „%2$s"?</string>
+    <string name="booking_confirmed_success">Резервацията е потвърдена.</string>
+    <string name="error_update_booking_status">Грешка при обновяване на статуса.</string>
+
+    <!-- Detail labels in host booking card -->
+    <string name="label_guest_info">Гости:</string>
+    <string name="label_dates">Дати:</string>
+    <string name="label_total">Общо:</string>
 </resources>

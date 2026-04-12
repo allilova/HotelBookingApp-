@@ -94,6 +94,13 @@
             android:exported="false"
             android:screenOrientation="landscape" />
 
+        <!-- Host booking management screen -->
+        <activity
+            android:name=".HostBookingsActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout"
+            android:parentActivityName=".UserProfileActivity" />
+
     </application>
 
 </manifest>

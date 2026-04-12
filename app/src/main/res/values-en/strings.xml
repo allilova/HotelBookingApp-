@@ -142,4 +142,21 @@
     <string name="btn_confirm_cancel">Yes, cancel</string>
     <string name="booking_cancelled_success">Booking has been cancelled.</string>
     <string name="error_cancel_booking">Failed to cancel booking.</string>
+    <!-- Host bookings screen -->
+    <string name="title_host_bookings">Booking Requests</string>
+    <string name="no_host_bookings">You have no booking requests yet.</string>
+    <string name="pending_count_zero">No pending bookings</string>
+    <string name="pending_count">%d booking(s) waiting for confirmation</string>
+
+    <!-- Host booking actions -->
+    <string name="btn_confirm_booking">Confirm</string>
+    <string name="confirm_booking_dialog_title">Confirm booking</string>
+    <string name="confirm_booking_dialog_msg">Confirm the booking by %1$s for "%2$s"?</string>
+    <string name="booking_confirmed_success">Booking confirmed.</string>
+    <string name="error_update_booking_status">Failed to update booking status.</string>
+
+    <!-- Detail labels in host booking card -->
+    <string name="label_guest_info">Guests:</string>
+    <string name="label_dates">Dates:</string>
+    <string name="label_total">Total:</string>
 </resources>
