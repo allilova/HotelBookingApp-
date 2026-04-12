@@ -184,7 +184,11 @@ class HostBookingsActivity : AppCompatActivity() {
                     try {
                         // Update only the "status" field in the Firestore document.
                         // All other booking data stays intact.
-                        BookingRepository.updateStatus(booking.firestoreId, newStatus)
+                        BookingRepository.updateStatus(
+                            firestoreId = booking.firestoreId,
+                            newStatus   = newStatus,
+                            booking     = booking  // ← needed to look up guest's FCM token
+                        )
 
                         // Show success message
                         val successMsg = when (newStatus) {

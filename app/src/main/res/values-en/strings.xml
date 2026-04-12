@@ -159,4 +159,10 @@
     <string name="label_guest_info">Guests:</string>
     <string name="label_dates">Dates:</string>
     <string name="label_total">Total:</string>
+
+    <!-- Push notification content -->
+    <string name="notif_new_booking_title">New booking!</string>
+    <string name="notif_confirmed_title">Booking confirmed! ✓</string>
+    <string name="notif_cancelled_by_host_title">Booking cancelled ✗</string>
+    <string name="notif_cancelled_by_guest_title">Booking cancelled by guest</string>
 </resources>

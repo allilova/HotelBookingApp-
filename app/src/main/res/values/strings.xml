@@ -159,4 +159,10 @@
     <string name="label_guest_info">Гости:</string>
     <string name="label_dates">Дати:</string>
     <string name="label_total">Общо:</string>
+
+    <!-- Push notification content -->
+    <string name="notif_new_booking_title">Нова резервация!</string>
+    <string name="notif_confirmed_title">Резервацията е потвърдена! ✓</string>
+    <string name="notif_cancelled_by_host_title">Резервацията е отказана ✗</string>
+    <string name="notif_cancelled_by_guest_title">Резервация отказана от госта</string>
 </resources>

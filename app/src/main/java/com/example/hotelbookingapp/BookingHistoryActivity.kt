@@ -91,9 +91,11 @@ class BookingHistoryActivity : AppCompatActivity() {
                         // Update only the status field in Firestore —
                         // all other booking data remains unchanged
                         BookingRepository.updateStatus(
-                            booking.firestoreId,
-                            BookingStatus.CANCELLED
+                            firestoreId = booking.firestoreId,
+                            newStatus   = BookingStatus.CANCELLED,
+                            booking     = booking  // ← needed to look up host's FCM token
                         )
+
                         Toast.makeText(
                             this@BookingHistoryActivity,
                             getString(R.string.booking_cancelled_success),
