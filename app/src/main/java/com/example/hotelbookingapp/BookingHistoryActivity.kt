@@ -14,13 +14,15 @@ import kotlinx.coroutines.launch
 class BookingHistoryActivity : AppCompatActivity() {
 
     private lateinit var adapter: BookingAdapter
+    private lateinit var rv: RecyclerView
+    private lateinit var tvEmpty: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_booking_history)
 
-        val rv      = findViewById<RecyclerView>(R.id.rvBookings)
-        val tvEmpty = findViewById<TextView>(R.id.tvEmptyBookings)
+        rv      = findViewById(R.id.rvBookings)
+        tvEmpty = findViewById(R.id.tvEmptyBookings)
         rv.layoutManager = LinearLayoutManager(this)
 
         adapter = BookingAdapter(
@@ -30,34 +32,34 @@ class BookingHistoryActivity : AppCompatActivity() {
         )
         rv.adapter = adapter
 
-        loadBookings(rv, tvEmpty)
+        loadBookings()
     }
 
-    private fun loadBookings(rv: RecyclerView, tvEmpty: TextView) {
+    private fun loadBookings() {
         val uid = FirebaseAuthManager.currentUid
         if (uid == null) {
-            tvEmpty.visibility = View.VISIBLE
-            tvEmpty.text       = getString(R.string.error_not_logged_in)
-            rv.visibility      = View.GONE
+            showEmpty(getString(R.string.error_not_logged_in))
             return
         }
+
+        // Show loading state
+        rv.visibility      = View.GONE
+        tvEmpty.visibility = View.GONE
 
         lifecycleScope.launch {
             try {
                 val bookings = BookingRepository.getBookingsForGuest(uid)
 
                 if (bookings.isEmpty()) {
-                    rv.visibility      = View.GONE
-                    tvEmpty.visibility = View.VISIBLE
+                    showEmpty(getString(R.string.no_bookings))
                 } else {
-                    rv.visibility      = View.VISIBLE
                     tvEmpty.visibility = View.GONE
+                    rv.visibility      = View.VISIBLE
                     adapter.updateData(bookings)
                 }
             } catch (e: Exception) {
-                rv.visibility      = View.GONE
-                tvEmpty.visibility = View.VISIBLE
-                tvEmpty.text       = getString(R.string.error_loading_bookings)
+                android.util.Log.e("BookingHistory", "Failed to load bookings: ${e.message}", e)
+                showEmpty(getString(R.string.error_loading_bookings))
                 Toast.makeText(
                     this@BookingHistoryActivity,
                     getString(R.string.error_loading_bookings),
@@ -67,14 +69,15 @@ class BookingHistoryActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Shows a confirmation dialog then cancels the booking in Firestore.
-     * Includes validation for firestoreId and detailed logging.
-     */
+    private fun showEmpty(message: String) {
+        rv.visibility      = View.GONE
+        tvEmpty.visibility = View.VISIBLE
+        tvEmpty.text       = message
+    }
+
     private fun confirmCancel(booking: Booking) {
-        // Log the booking details so we can verify firestoreId is not empty
         android.util.Log.d("BookingCancel",
-            "Attempting to cancel booking: firestoreId='${booking.firestoreId}' " +
+            "Attempting to cancel: firestoreId='${booking.firestoreId}' " +
                     "hotelName='${booking.hotelName}' status='${booking.status}'"
         )
 
@@ -93,33 +96,19 @@ class BookingHistoryActivity : AppCompatActivity() {
             .setPositiveButton(getString(R.string.btn_confirm_cancel)) { _, _ ->
                 lifecycleScope.launch {
                     try {
-                        android.util.Log.d("BookingCancel",
-                            "Calling updateStatus with firestoreId='${booking.firestoreId}'"
-                        )
-
                         BookingRepository.updateStatus(
                             firestoreId = booking.firestoreId,
                             newStatus   = BookingStatus.CANCELLED,
                             booking     = booking
                         )
-
-                        android.util.Log.d("BookingCancel", "updateStatus succeeded")
-
                         Toast.makeText(
                             this@BookingHistoryActivity,
                             getString(R.string.booking_cancelled_success),
                             Toast.LENGTH_SHORT
                         ).show()
-
-                        // Reload the list so the status badge updates immediately
-                        val rv      = findViewById<RecyclerView>(R.id.rvBookings)
-                        val tvEmpty = findViewById<TextView>(R.id.tvEmptyBookings)
-                        loadBookings(rv, tvEmpty)
-
+                        loadBookings()
                     } catch (e: Exception) {
-                        android.util.Log.e("BookingCancel",
-                            "updateStatus FAILED: ${e.message}", e)
-
+                        android.util.Log.e("BookingCancel", "Cancel FAILED: ${e.message}", e)
                         Toast.makeText(
                             this@BookingHistoryActivity,
                             "Грешка: ${e.message}",
