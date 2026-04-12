@@ -69,36 +69,60 @@ class BookingHistoryActivity : AppCompatActivity() {
 
     /**
      * Shows a confirmation dialog then cancels the booking in Firestore.
-     * Passes the full booking object to updateStatus() so the notification
-     * to the host can be sent correctly.
+     * Includes validation for firestoreId and detailed logging.
      */
     private fun confirmCancel(booking: Booking) {
+        // Log the booking details so we can verify firestoreId is not empty
+        android.util.Log.d("BookingCancel",
+            "Attempting to cancel booking: firestoreId='${booking.firestoreId}' " +
+                    "hotelName='${booking.hotelName}' status='${booking.status}'"
+        )
+
+        if (booking.firestoreId.isBlank()) {
+            Toast.makeText(
+                this,
+                "Грешка: резервацията няма валиден ID. Моля, направете нова резервация.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.cancel_booking_title))
             .setMessage(getString(R.string.cancel_booking_msg, booking.hotelName))
             .setPositiveButton(getString(R.string.btn_confirm_cancel)) { _, _ ->
                 lifecycleScope.launch {
                     try {
-                        // Pass the full booking object — needed so BookingRepository
-                        // can read booking.hostUserId and send the host a notification
+                        android.util.Log.d("BookingCancel",
+                            "Calling updateStatus with firestoreId='${booking.firestoreId}'"
+                        )
+
                         BookingRepository.updateStatus(
                             firestoreId = booking.firestoreId,
                             newStatus   = BookingStatus.CANCELLED,
                             booking     = booking
                         )
+
+                        android.util.Log.d("BookingCancel", "updateStatus succeeded")
+
                         Toast.makeText(
                             this@BookingHistoryActivity,
                             getString(R.string.booking_cancelled_success),
                             Toast.LENGTH_SHORT
                         ).show()
+
                         // Reload the list so the status badge updates immediately
                         val rv      = findViewById<RecyclerView>(R.id.rvBookings)
                         val tvEmpty = findViewById<TextView>(R.id.tvEmptyBookings)
                         loadBookings(rv, tvEmpty)
+
                     } catch (e: Exception) {
+                        android.util.Log.e("BookingCancel",
+                            "updateStatus FAILED: ${e.message}", e)
+
                         Toast.makeText(
                             this@BookingHistoryActivity,
-                            getString(R.string.error_cancel_booking),
+                            "Грешка: ${e.message}",
                             Toast.LENGTH_LONG
                         ).show()
                     }

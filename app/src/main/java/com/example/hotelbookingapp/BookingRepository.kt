@@ -4,21 +4,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 
-/**
- * BookingRepository handles all Firestore operations for bookings
- * and triggers Firestore-based push notifications after each
- * status-changing operation.
- *
- * Notification approach:
- *  - We write a document to the "notifications" Firestore collection
- *  - The recipient's NotificationListenerService picks it up in real time
- *  - This replaces the deprecated FCM Legacy HTTP API
- *
- * Notification triggers:
- *  createBooking()         → notify HOST    (new booking arrived)
- *  updateStatus(CONFIRMED) → notify GUEST   (booking was confirmed)
- *  updateStatus(CANCELLED) → notify GUEST or HOST depending on who cancelled
- */
 object BookingRepository {
 
     private val firestore          = FirebaseFirestore.getInstance()
@@ -27,16 +12,24 @@ object BookingRepository {
     // ── Create ────────────────────────────────────────────────────────────────
 
     /**
-     * Saves a new booking to Firestore and notifies the host.
+     * Saves a new booking to Firestore.
+     *
+     * KEY FIX: We first get a new document reference (which gives us the ID
+     * immediately), then write the booking WITH the correct firestoreId already
+     * set. This is atomic — no separate update() call needed, so the ID can
+     * never be missing from the document.
      */
     suspend fun createBooking(booking: Booking): Booking {
-        // Write to Firestore and get the auto-generated document ID
-        val docRef       = bookingsCollection.add(booking.toMap()).await()
-        val savedBooking = booking.copy(firestoreId = docRef.id)
-        docRef.update("firestoreId", docRef.id).await()
+        // Get a new document reference — this gives us the ID before writing
+        val docRef = bookingsCollection.document()
 
-        // Notify the host that a new booking has been made for their hotel.
-        // We use the hostUserId directly — no FCM token lookup needed.
+        // Build the booking with the correct firestoreId already filled in
+        val savedBooking = booking.copy(firestoreId = docRef.id)
+
+        // Write the complete booking in ONE call — no separate update needed
+        docRef.set(savedBooking.toMap()).await()
+
+        // Notify the host
         if (booking.hostUserId.isNotBlank()) {
             NotificationHelper.sendRemoteNotification(
                 recipientUid = booking.hostUserId,
@@ -77,17 +70,25 @@ object BookingRepository {
     // ── Update: Status ────────────────────────────────────────────────────────
 
     /**
-     * Updates the booking status in Firestore and notifies the affected party.
+     * Updates the booking status in Firestore.
      *
-     * CONFIRMED → notify GUEST  (host confirmed their booking)
-     * CANCELLED by guest → notify HOST  (guest cancelled)
-     * CANCELLED by host  → notify GUEST (host cancelled)
+     * KEY FIX: Before updating, we validate that firestoreId is not blank.
+     * If it is blank we throw immediately with a clear message instead of
+     * silently failing.
      */
     suspend fun updateStatus(
         firestoreId: String,
         newStatus:   BookingStatus,
         booking:     Booking? = null
     ) {
+        // Guard: never attempt to update a document with an empty ID
+        if (firestoreId.isBlank()) {
+            throw Exception(
+                "Cannot update booking status: firestoreId is empty. " +
+                        "The booking document ID was not saved correctly."
+            )
+        }
+
         // Update the status field in Firestore
         bookingsCollection
             .document(firestoreId)
@@ -102,7 +103,6 @@ object BookingRepository {
 
             when (newStatus) {
                 BookingStatus.CONFIRMED -> {
-                    // Host confirmed → notify the guest
                     if (booking.guestUserId.isNotBlank()) {
                         NotificationHelper.sendRemoteNotification(
                             recipientUid = booking.guestUserId,
@@ -115,7 +115,7 @@ object BookingRepository {
 
                 BookingStatus.CANCELLED -> {
                     if (currentUid == booking.guestUserId) {
-                        // Guest cancelled → notify the host
+                        // Guest cancelled → notify host
                         if (booking.hostUserId.isNotBlank()) {
                             NotificationHelper.sendRemoteNotification(
                                 recipientUid = booking.hostUserId,
@@ -126,7 +126,7 @@ object BookingRepository {
                             )
                         }
                     } else {
-                        // Host cancelled → notify the guest
+                        // Host cancelled → notify guest
                         if (booking.guestUserId.isNotBlank()) {
                             NotificationHelper.sendRemoteNotification(
                                 recipientUid = booking.guestUserId,
@@ -138,9 +138,7 @@ object BookingRepository {
                     }
                 }
 
-                BookingStatus.PENDING -> {
-                    // PENDING is only set on creation in createBooking()
-                }
+                BookingStatus.PENDING -> { /* only set on creation */ }
             }
         } catch (e: Exception) {
             android.util.Log.e("BookingRepository",
@@ -171,8 +169,17 @@ object BookingRepository {
     @Suppress("UNCHECKED_CAST")
     private fun com.google.firebase.firestore.DocumentSnapshot.toBooking(): Booking? {
         return try {
+            // KEY FIX: Use the actual Firestore document ID (this.id) as the
+            // primary source for firestoreId. Only fall back to the stored
+            // field value if the document ID is somehow unavailable.
+            // This ensures firestoreId is NEVER empty even for old bookings
+            // that were saved before the fix.
+            val resolvedFirestoreId = this.id.ifBlank {
+                getString("firestoreId") ?: ""
+            }
+
             Booking(
-                firestoreId   = getString("firestoreId")        ?: id,
+                firestoreId   = resolvedFirestoreId,
                 hotelId       = getLong("hotelId")?.toInt()     ?: 0,
                 hotelName     = getString("hotelName")          ?: "",
                 hotelCity     = getString("hotelCity")          ?: "",
