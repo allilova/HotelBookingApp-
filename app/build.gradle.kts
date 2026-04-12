@@ -23,21 +23,10 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        val localProperties = Properties()
-        val localPropertiesFile = rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            localProperties.load(localPropertiesFile.inputStream())
-        }
-        buildConfigField(
-            "String",
-            "FCM_SERVER_KEY",
-            "\"${localProperties.getProperty("FCM_SERVER_KEY", "")}\""
-        )
+
     }
 
-    buildFeatures {
-        buildConfig = true
-    }
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

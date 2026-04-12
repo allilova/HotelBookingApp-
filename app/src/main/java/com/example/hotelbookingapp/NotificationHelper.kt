@@ -1,133 +1,128 @@
 package com.example.hotelbookingapp
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 /**
- * NotificationHelper sends push notifications to specific devices via
- * the Firebase Cloud Messaging (FCM) legacy HTTP API.
+ * NotificationHelper handles two types of notifications:
  *
- * Why the legacy HTTP API and not FCM HTTP v1?
- * The v1 API requires an OAuth 2.0 access token generated from a service
- * account JSON file. Embedding a service account JSON in an APK is a
- * serious security risk and should never be done in production.
+ * 1. LOCAL notifications — shown immediately on THIS device using
+ *    Android NotificationCompat. Used after booking confirmation, etc.
  *
- * The legacy API uses a simple Server Key which is slightly safer for a
- * course project, though in production this would move to a backend server
- * or Firebase Cloud Functions.
+ * 2. REMOTE notifications — written to Firestore so the RECIPIENT's
+ *    device can read them in real time via a Firestore listener.
+ *    This replaces the deprecated FCM Legacy HTTP API.
  *
- * FCM legacy API endpoint:
- *   POST https://fcm.googleapis.com/fcm/send
- *   Authorization: key=YOUR_SERVER_KEY
- *   Content-Type: application/json
- *
- * Payload format:
- *   {
- *     "to": "RECIPIENT_FCM_TOKEN",
- *     "notification": {
- *       "title": "...",
- *       "body": "..."
- *     },
- *     "data": {
- *       "title": "...",
- *       "body": "..."
- *     }
- *   }
- *
- * We send both "notification" and "data" payloads because:
- *   - "notification" payload: shown automatically when app is in background
- *   - "data" payload: read by HotelBookingFCMService when app is in foreground
+ * Firestore structure for remote notifications:
+ *   notifications/
+ *     {auto-id}/
+ *       recipientUid: String   ← Firebase UID of the person to notify
+ *       title:        String
+ *       body:         String
+ *       createdAt:    Long     ← epoch millis
+ *       read:         Boolean  ← false until the recipient reads it
  */
 object NotificationHelper {
 
-    private const val FCM_URL = "https://fcm.googleapis.com/fcm/send"
+    private val firestore = FirebaseFirestore.getInstance()
+    private val notificationsCollection = firestore.collection("notifications")
+
+    const val CHANNEL_ID = "booking_channel"
+
+    // ── Remote notification (Firestore) ───────────────────────────────────────
 
     /**
-     * Sends a push notification to a specific device identified by its FCM token.
+     * Writes a notification document to Firestore for the recipient.
+     * The recipient's device reads this via a real-time Firestore listener
+     * in HotelBookingListenerService and shows it as a system notification.
      *
-     * This function makes a network request so it MUST be called from a
-     * coroutine. It switches to Dispatchers.IO internally so the caller
-     * can call it from any coroutine context.
+     * This is best-effort — if it fails, we log but never throw.
      *
-     * @param recipientToken  FCM token of the recipient's device.
-     *                        Fetched from Firestore users/{uid}/fcmToken.
-     * @param title           Notification title.
-     * @param body            Notification body text.
-     *
-     * Silently returns if:
-     *  - recipientToken is blank (user has no token — e.g. never logged in on this device)
-     *  - FCM_SERVER_KEY is blank (key not configured in local.properties)
-     *  - Network request fails (we don't want notification failures to crash the booking flow)
+     * @param recipientUid Firebase UID of the user to notify.
+     * @param title        Notification title.
+     * @param body         Notification body text.
      */
-    suspend fun sendNotification(
-        recipientToken: String,
-        title:          String,
-        body:           String
+    suspend fun sendRemoteNotification(
+        recipientUid: String,
+        title:        String,
+        body:         String
     ) {
-        // Don't attempt to send if we don't have the required values
-        if (recipientToken.isBlank()) return
-        if (BuildConfig.FCM_SERVER_KEY.isBlank()) return
+        if (recipientUid.isBlank()) return
 
-        withContext(Dispatchers.IO) {
-            try {
-                val url = URL(FCM_URL)
-                val connection = url.openConnection() as HttpURLConnection
-
-                connection.apply {
-                    requestMethod = "POST"
-                    setRequestProperty("Authorization", "key=${BuildConfig.FCM_SERVER_KEY}")
-                    setRequestProperty("Content-Type", "application/json")
-                    doOutput = true
-                    connectTimeout = 10_000  // 10 second connection timeout
-                    readTimeout    = 10_000  // 10 second read timeout
-                }
-
-                // Build the FCM JSON payload.
-                // We send both "notification" (for background) and "data" (for foreground).
-                val payload = JSONObject().apply {
-                    put("to", recipientToken)
-                    put("notification", JSONObject().apply {
-                        put("title", title)
-                        put("body",  body)
-                        put("sound", "default")
-                    })
-                    put("data", JSONObject().apply {
-                        put("title", title)
-                        put("body",  body)
-                    })
-                }
-
-                // Write the payload to the connection output stream
-                val writer = OutputStreamWriter(connection.outputStream)
-                writer.write(payload.toString())
-                writer.flush()
-                writer.close()
-
-                // Read the response code — 200 means success
-                val responseCode = connection.responseCode
-                if (responseCode != HttpURLConnection.HTTP_OK) {
-                    // Log but don't throw — notification failure shouldn't
-                    // affect the booking flow
-                    android.util.Log.w(
-                        "NotificationHelper",
-                        "FCM send failed with response code: $responseCode"
-                    )
-                }
-
-                connection.disconnect()
-
-            } catch (e: Exception) {
-                // Network errors, timeouts, etc.
-                // We log but do not rethrow — notification failure is non-critical
-                android.util.Log.e(
-                    "NotificationHelper",
-                    "Failed to send FCM notification: ${e.message}"
+        try {
+            notificationsCollection.add(
+                mapOf(
+                    "recipientUid" to recipientUid,
+                    "title"        to title,
+                    "body"         to body,
+                    "createdAt"    to System.currentTimeMillis(),
+                    "read"         to false
                 )
+            ).await()
+        } catch (e: Exception) {
+            android.util.Log.e("NotificationHelper",
+                "Failed to write notification to Firestore: ${e.message}")
+        }
+    }
+
+    // ── Local notification (shown on THIS device immediately) ─────────────────
+
+    /**
+     * Shows a system notification on the current device immediately.
+     * Used for confirming the user's own action (e.g. after booking).
+     *
+     * @param context Android context.
+     * @param title   Notification title.
+     * @param body    Notification body text.
+     */
+    fun showLocalNotification(context: Context, title: String, body: String) {
+        try {
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE)
+                    as NotificationManager
+
+            // Create channel — safe to call multiple times on Android 8+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    CHANNEL_ID,
+                    "Booking Notifications",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    enableLights(true)
+                    enableVibration(true)
+                }
+                nm.createNotificationChannel(channel)
             }
+
+            // Tapping the notification opens MainActivity
+            val intent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                context, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .build()
+
+            nm.notify(System.currentTimeMillis().toInt(), notification)
+        } catch (e: Exception) {
+            android.util.Log.e("NotificationHelper",
+                "Failed to show local notification: ${e.message}")
         }
     }
 }

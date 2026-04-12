@@ -23,9 +23,6 @@ class BookingHistoryActivity : AppCompatActivity() {
         val tvEmpty = findViewById<TextView>(R.id.tvEmptyBookings)
         rv.layoutManager = LinearLayoutManager(this)
 
-        // Create the adapter with a cancel callback.
-        // When the guest taps Cancel, we show a confirmation dialog
-        // before updating Firestore.
         adapter = BookingAdapter(
             list            = emptyList(),
             activityContext = this,
@@ -36,23 +33,17 @@ class BookingHistoryActivity : AppCompatActivity() {
         loadBookings(rv, tvEmpty)
     }
 
-    /**
-     * Loads the current user's bookings from Firestore.
-     * Shows an empty state if there are no bookings.
-     */
     private fun loadBookings(rv: RecyclerView, tvEmpty: TextView) {
         val uid = FirebaseAuthManager.currentUid
         if (uid == null) {
             tvEmpty.visibility = View.VISIBLE
-            tvEmpty.text = getString(R.string.error_not_logged_in)
-            rv.visibility = View.GONE
+            tvEmpty.text       = getString(R.string.error_not_logged_in)
+            rv.visibility      = View.GONE
             return
         }
 
         lifecycleScope.launch {
             try {
-                // BookingRepository.getBookingsForGuest() queries Firestore
-                // for all bookings where guestUserId == uid
                 val bookings = BookingRepository.getBookingsForGuest(uid)
 
                 if (bookings.isEmpty()) {
@@ -77,9 +68,9 @@ class BookingHistoryActivity : AppCompatActivity() {
     }
 
     /**
-     * Shows a confirmation dialog before cancelling a booking.
-     * If confirmed, updates the booking status to CANCELLED in Firestore
-     * and refreshes the list.
+     * Shows a confirmation dialog then cancels the booking in Firestore.
+     * Passes the full booking object to updateStatus() so the notification
+     * to the host can be sent correctly.
      */
     private fun confirmCancel(booking: Booking) {
         AlertDialog.Builder(this)
@@ -88,20 +79,19 @@ class BookingHistoryActivity : AppCompatActivity() {
             .setPositiveButton(getString(R.string.btn_confirm_cancel)) { _, _ ->
                 lifecycleScope.launch {
                     try {
-                        // Update only the status field in Firestore —
-                        // all other booking data remains unchanged
+                        // Pass the full booking object — needed so BookingRepository
+                        // can read booking.hostUserId and send the host a notification
                         BookingRepository.updateStatus(
                             firestoreId = booking.firestoreId,
                             newStatus   = BookingStatus.CANCELLED,
-                            booking     = booking  // ← needed to look up host's FCM token
+                            booking     = booking
                         )
-
                         Toast.makeText(
                             this@BookingHistoryActivity,
                             getString(R.string.booking_cancelled_success),
                             Toast.LENGTH_SHORT
                         ).show()
-                        // Refresh the list so the status badge updates immediately
+                        // Reload the list so the status badge updates immediately
                         val rv      = findViewById<RecyclerView>(R.id.rvBookings)
                         val tvEmpty = findViewById<TextView>(R.id.tvEmptyBookings)
                         loadBookings(rv, tvEmpty)

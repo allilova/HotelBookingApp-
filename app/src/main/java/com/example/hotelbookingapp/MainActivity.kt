@@ -74,7 +74,6 @@ class MainActivity : AppCompatActivity() {
         val recyclerView = findViewById<RecyclerView>(R.id.rvHotels)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // КОРИГИРАНО: Логиката за клик е затворена правилно
         val adapter = HotelAdapter { hotel, sharedImageView ->
             val intent = Intent(this, HotelDetailActivity::class.java).apply {
                 putExtra("HOTEL_ID",           hotel.id)
@@ -182,7 +181,7 @@ class MainActivity : AppCompatActivity() {
                 AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
             sharedPref.edit().putInt("night_mode", newMode).apply()
             AppCompatDelegate.setDefaultNightMode(newMode)
-            updateThemeIcon() // Обновяваме иконата веднага след клик
+            updateThemeIcon()
         }
 
         // ── Language ──────────────────────────────────────────────────
@@ -207,6 +206,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+
+        // ── КОРИГИРАНО: Стартиране на услугата за известия ──
+        if (FirebaseAuthManager.isLoggedIn) {
+            startService(Intent(this, NotificationListenerService::class.java))
+        }
+
         sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER)?.let { accel ->
             sensorManager.registerListener(
                 shakeDetector, accel, SensorManager.SENSOR_DELAY_UI

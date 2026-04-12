@@ -27,6 +27,7 @@ class FavoritesActivity : AppCompatActivity() {
         adapter = FavoriteAdapter(emptyList(), this) { hotel ->
             lifecycleScope.launch {
                 try {
+                    // Room DELETE must run on IO dispatcher
                     withContext(Dispatchers.IO) {
                         db.hotelDao().deleteFavorite(hotel)
                     }
@@ -47,6 +48,7 @@ class FavoritesActivity : AppCompatActivity() {
     private fun refreshData(db: AppDatabase) {
         lifecycleScope.launch {
             try {
+                // Room SELECT must run on IO dispatcher
                 val favorites = withContext(Dispatchers.IO) {
                     db.hotelDao().getAllFavorites()
                 }

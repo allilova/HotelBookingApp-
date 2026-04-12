@@ -1,7 +1,6 @@
 package com.example.hotelbookingapp
 
 import android.content.Context
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +19,10 @@ import java.util.*
 
 /**
  * Adapter for the guest's booking history list.
+ *
+ * Key fix: HotelRepository.resolve() is now a suspend function that
+ * may hit Firestore. We call it inside a coroutine and set fallback
+ * values immediately so the item is never blank while loading.
  */
 class BookingAdapter(
     private var list: List<Booking>,
@@ -30,14 +33,14 @@ class BookingAdapter(
     private val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val image:        ImageView = view.findViewById(R.id.bookingImage)
-        val tvName:       TextView  = view.findViewById(R.id.bookingHotelName)
-        val tvDates:      TextView  = view.findViewById(R.id.bookingDates)
-        val tvPrice:      TextView  = view.findViewById(R.id.bookingPrice)
-        val tvGuests:     TextView  = view.findViewById(R.id.bookingGuests)
-        val tvBookedAt:   TextView  = view.findViewById(R.id.bookingBookedAt)
-        val tvStatus:     TextView  = view.findViewById(R.id.bookingStatus)
-        val btnCancel:    Button    = view.findViewById(R.id.btnCancelBooking)
+        val image:      ImageView = view.findViewById(R.id.bookingImage)
+        val tvName:     TextView  = view.findViewById(R.id.bookingHotelName)
+        val tvDates:    TextView  = view.findViewById(R.id.bookingDates)
+        val tvPrice:    TextView  = view.findViewById(R.id.bookingPrice)
+        val tvGuests:   TextView  = view.findViewById(R.id.bookingGuests)
+        val tvBookedAt: TextView  = view.findViewById(R.id.bookingBookedAt)
+        val tvStatus:   TextView  = view.findViewById(R.id.bookingStatus)
+        val btnCancel:  Button    = view.findViewById(R.id.btnCancelBooking)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -51,23 +54,26 @@ class BookingAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val b = list[position]
 
-        // ── Hotel name + city (With Coroutine Resolution) ─────────────────────
-        // 1. Set fallback values immediately
+        // ── Set fallback values immediately so item is never blank ────────────
         holder.tvName.text = "${b.hotelName} — ${b.hotelCity}"
 
-        // 2. Resolve in coroutine to avoid blocking the UI thread
+        // ── Resolve hotel name in coroutine (may hit Firestore) ───────────────
         CoroutineScope(Dispatchers.Main).launch {
-            val resolved = withContext(Dispatchers.IO) {
-                HotelRepository.resolve(activityContext, b.hotelId, b.hotelName)
+            try {
+                val resolved = withContext(Dispatchers.IO) {
+                    HotelRepository.resolve(activityContext, b.hotelId, b.hotelName)
+                }
+                holder.tvName.text =
+                    "${resolved?.name ?: b.hotelName} — ${resolved?.city ?: b.hotelCity}"
+            } catch (e: Exception) {
+                // Keep the fallback value already set above
             }
-            val displayName = resolved?.name ?: b.hotelName
-            val displayCity = resolved?.city ?: b.hotelCity
-            holder.tvName.text = "$displayName — $displayCity"
         }
 
-        // ── Dates + price ─────────────────────────────────────────────────────
+        // ── Dates ─────────────────────────────────────────────────────────────
         holder.tvDates.text = "${b.checkIn}  →  ${b.checkOut}"
 
+        // ── Price ─────────────────────────────────────────────────────────────
         val nights = calculateNights(b.checkIn, b.checkOut)
         val total  = nights * b.pricePerNight * b.guestCount
         holder.tvPrice.text = activityContext.getString(
@@ -97,6 +103,7 @@ class BookingAdapter(
             .into(holder.image)
 
         // ── Status badge ──────────────────────────────────────────────────────
+        // Parse status safely — default to PENDING if value is unrecognised
         val status = try {
             BookingStatus.valueOf(b.status)
         } catch (e: IllegalArgumentException) {
@@ -117,15 +124,22 @@ class BookingAdapter(
             BookingStatus.CANCELLED ->
                 ContextCompat.getColor(activityContext, R.color.red_unavailable)
         }
-
         val bg = holder.tvStatus.background.mutate()
         bg.setTint(badgeColor)
         holder.tvStatus.background = bg
 
         // ── Cancel button ─────────────────────────────────────────────────────
-        val canCancel = status == BookingStatus.PENDING || status == BookingStatus.CONFIRMED
+        // IMPORTANT: always set visibility explicitly — RecyclerView recycles
+        // views so a previously GONE button can reappear on a new item if we
+        // don't explicitly set it to VISIBLE here.
+        val canCancel = status == BookingStatus.PENDING ||
+                status == BookingStatus.CONFIRMED
         holder.btnCancel.visibility = if (canCancel) View.VISIBLE else View.GONE
-        holder.btnCancel.setOnClickListener { onCancelClick(b) }
+
+        // Only attach the click listener when the button is visible
+        if (canCancel) {
+            holder.btnCancel.setOnClickListener { onCancelClick(b) }
+        }
     }
 
     fun updateData(newList: List<Booking>) {

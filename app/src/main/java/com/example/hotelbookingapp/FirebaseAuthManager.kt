@@ -29,24 +29,19 @@ object FirebaseAuthManager {
 
     // ── Registration ──────────────────────────────────────────────────────────
 
-    /**
-     * Registers a new user and saves their profile + FCM token.
-     */
     suspend fun register(
         fullName: String,
         email:    String,
         password: String,
         role:     UserRole
     ): User {
-        // Step 1: Create the Firebase Auth account.
         val authResult = auth
             .createUserWithEmailAndPassword(email.trim().lowercase(), password)
             .await()
 
         val uid = authResult.user?.uid
-            ?: throw Exception("Registration succeeded but UID is null — please try again.")
+            ?: throw Exception("Registration succeeded but UID is null.")
 
-        // Step 2: Build the user profile.
         val user = User(
             fullName  = fullName.trim(),
             email     = email.trim().lowercase(),
@@ -55,19 +50,15 @@ object FirebaseAuthManager {
             points    = 0
         )
 
-        // Step 3: Write to Firestore.
         usersCollection.document(uid).set(user.toMap()).await()
 
-        // Step 4: Save the FCM token so the user can receive notifications immediately.
+        // Save FCM token immediately after registration so the user
+        // can receive notifications right away
         try {
-            FirebaseMessaging.getInstance()
-                .token
+            val token = FirebaseMessaging.getInstance().token.await()
+            usersCollection.document(uid)
+                .update("fcmToken", token)
                 .await()
-                .let { token ->
-                    usersCollection.document(uid)
-                        .update("fcmToken", token)
-                        .await()
-                }
         } catch (e: Exception) {
             // Non-critical — token will be saved on next onNewToken() call
         }
@@ -77,37 +68,34 @@ object FirebaseAuthManager {
 
     // ── Login ─────────────────────────────────────────────────────────────────
 
-    /**
-     * Logs in the user and refreshes their FCM token in Firestore.
-     */
     suspend fun login(email: String, password: String): User {
         auth.signInWithEmailAndPassword(email.trim().lowercase(), password).await()
 
-        // After successful login, refresh the FCM token in Firestore.
-        // The token may have changed since the last login (e.g. app reinstall).
+        // Refresh the FCM token after every login.
+        // The token may have changed if the user reinstalled the app or
+        // cleared app data since their last login.
         try {
-            FirebaseMessaging.getInstance()
-                .token
-                .await()
-                .let { token -> updateFcmToken(token) }
+            val token = FirebaseMessaging.getInstance().token.await()
+            updateFcmToken(token)
         } catch (e: Exception) {
-            // Token refresh is non-critical — login still succeeds
+            // Non-critical — login still succeeds without a fresh token
         }
 
         return fetchCurrentUserProfile()
             ?: throw Exception("Login succeeded but user profile not found in Firestore.")
     }
 
+    // ── Logout ────────────────────────────────────────────────────────────────
+
     fun logout() {
         auth.signOut()
     }
 
-    // ── Helper methods ────────────────────────────────────────────────────────
+    // ── Profile ───────────────────────────────────────────────────────────────
 
     suspend fun fetchCurrentUserProfile(): User? {
         val uid = currentUid ?: return null
         val snapshot = usersCollection.document(uid).get().await()
-
         if (!snapshot.exists()) return null
 
         return User(
@@ -125,6 +113,12 @@ object FirebaseAuthManager {
         return user.role == UserRole.HOST.name
     }
 
+    // ── FCM Token ─────────────────────────────────────────────────────────────
+
+    /**
+     * Saves this device's FCM token to Firestore at users/{uid}/fcmToken.
+     * Called after login, registration, and whenever Firebase refreshes the token.
+     */
     suspend fun updateFcmToken(token: String) {
         val uid = currentUid ?: return
         usersCollection.document(uid)
@@ -132,17 +126,31 @@ object FirebaseAuthManager {
             .await()
     }
 
+    /**
+     * Fetches the FCM token of ANY user by their Firebase UID.
+     * Used by BookingRepository to find the recipient's token before
+     * sending a push notification.
+     *
+     * Returns null if the user document doesn't exist or has no token.
+     */
     suspend fun getFcmTokenForUser(uid: String): String? {
-        val snapshot = usersCollection.document(uid).get().await()
-        return snapshot.getString("fcmToken")
+        if (uid.isBlank()) return null
+        return try {
+            val snapshot = usersCollection.document(uid).get().await()
+            snapshot.getString("fcmToken")
+        } catch (e: Exception) {
+            null
+        }
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private fun User.toMap(): Map<String, Any> = mapOf(
         "fullName"  to fullName,
         "email"     to email,
         "role"      to role,
         "createdAt" to createdAt,
-        "fcmToken"  to fcmToken,
+        "fcmToken"  to "",  // will be updated immediately after
         "points"    to points
     )
 }

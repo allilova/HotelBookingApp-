@@ -1,12 +1,9 @@
 package com.example.hotelbookingapp
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,7 +11,6 @@ import android.widget.*
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
@@ -73,8 +69,6 @@ class HotelDetailActivity : AppCompatActivity() {
         supportPostponeEnterTransition()
 
         // ── Intent extras ─────────────────────────────────────────────────────
-        // Only non-translatable data comes via Intent.
-        // Name/city/description are resolved from HotelRepository on IO thread.
         val hotelId      = intent.getIntExtra("HOTEL_ID",           -1)
         val price        = intent.getDoubleExtra("HOTEL_PRICE",       0.0)
         val rating       = intent.getFloatExtra("HOTEL_RATING",       0f)
@@ -83,8 +77,6 @@ class HotelDetailActivity : AppCompatActivity() {
         val lon          = intent.getDoubleExtra("HOTEL_LON",         23.3219)
         val imageUrl     = intent.getStringExtra("HOTEL_IMAGE")       ?: ""
         val hostUserId   = intent.getStringExtra("HOST_USER_ID")      ?: ""
-
-        // Update the class-level firestoreId property
         firestoreId      = intent.getStringExtra("HOTEL_FIRESTORE_ID") ?: ""
 
         // ── View references ───────────────────────────────────────────────────
@@ -101,11 +93,9 @@ class HotelDetailActivity : AppCompatActivity() {
         val btnAR            = findViewById<Button>(R.id.btnViewAR)
         val btnFav           = findViewById<ImageButton>(R.id.btnFavorite)
 
-        // ── Guest count views ─────────────────────────────────────────────────
         val btnGuestMinus    = findViewById<ImageButton>(R.id.btnGuestMinus)
         val btnGuestPlus     = findViewById<ImageButton>(R.id.btnGuestPlus)
         val tvGuestCount     = findViewById<TextView>(R.id.tvGuestCount)
-        // This is the container we add name fields into dynamically
         val containerGuestNames = findViewById<LinearLayout>(R.id.containerGuestNames)
 
         detailImage.transitionName = "hotelImageTransition"
@@ -136,7 +126,6 @@ class HotelDetailActivity : AppCompatActivity() {
             })
             .into(detailImage)
 
-        // ── Basic UI (price / rating / availability) ──────────────────────────
         tvPrice.text = getString(R.string.price_per_night, price)
         rbRating.rating = rating
         tvAvailability.text = getString(
@@ -148,15 +137,12 @@ class HotelDetailActivity : AppCompatActivity() {
         )
 
         // ── Guest count controls ──────────────────────────────────────────────
-
-        // Add first guest name field immediately (there's always at least 1 guest)
         addGuestNameField(containerGuestNames, 1)
         updateGuestCountDisplay(tvGuestCount)
 
         btnGuestMinus.setOnClickListener {
             if (guestCount > 1) {
                 guestCount--
-                // Remove the last name field from the UI and our tracking list
                 if (guestNameFields.isNotEmpty()) {
                     val lastIndex = containerGuestNames.childCount - 1
                     containerGuestNames.removeViewAt(lastIndex)
@@ -184,7 +170,6 @@ class HotelDetailActivity : AppCompatActivity() {
             detailName.text = name
             detailDesc.text = desc
 
-            // Set first guest name field hint to include the logged-in user's name
             val currentUserName = withContext(Dispatchers.IO) {
                 FirebaseAuthManager.fetchCurrentUserProfile()?.fullName ?: ""
             }
@@ -192,10 +177,8 @@ class HotelDetailActivity : AppCompatActivity() {
                 guestNameFields[0].setText(currentUserName)
             }
 
-            // ── Map ───────────────────────────────────────────────────────────
             setupMap(lat, lon, name)
 
-            // ── Favourite ─────────────────────────────────────────────────────
             viewModel.loadFavouriteState(hotelId)
 
             lifecycleScope.launch {
@@ -219,7 +202,6 @@ class HotelDetailActivity : AppCompatActivity() {
                 )
             }
 
-            // ── Book now ──────────────────────────────────────────────────────
             btnBook.setOnClickListener {
                 if (checkInMs == null || checkOutMs == null) {
                     Toast.makeText(this@HotelDetailActivity,
@@ -234,8 +216,6 @@ class HotelDetailActivity : AppCompatActivity() {
                     return@setOnClickListener
                 }
 
-                // Collect guest names from the dynamic input fields.
-                // If a field is blank, use "Гост N" as a fallback.
                 val names = guestNameFields.mapIndexed { index, field ->
                     field.text.toString().trim().ifBlank {
                         getString(R.string.guest_name_fallback, index + 1)
@@ -261,7 +241,6 @@ class HotelDetailActivity : AppCompatActivity() {
                 )
             }
 
-            // ── AR ────────────────────────────────────────────────────────────
             btnAR.setOnClickListener {
                 startActivity(
                     android.content.Intent(this@HotelDetailActivity, ARViewActivity::class.java)
@@ -278,7 +257,14 @@ class HotelDetailActivity : AppCompatActivity() {
                 val nights = ((checkOutMs!! - checkInMs!!) / (1000 * 60 * 60 * 24))
                     .coerceAtLeast(1)
                 val name = findViewById<TextView>(R.id.detailName).text.toString()
-                sendNotification(name, nights, price)
+
+                // Show local notification on this device confirming the booking
+                NotificationHelper.showLocalNotification(
+                    context = this@HotelDetailActivity,
+                    title   = getString(R.string.notif_title),
+                    body    = getString(R.string.notif_text, name, nights, nights * price)
+                )
+
                 Toast.makeText(
                     this@HotelDetailActivity,
                     getString(R.string.booking_sent, name, nights),
@@ -344,8 +330,6 @@ class HotelDetailActivity : AppCompatActivity() {
         }
     }
 
-    // ── Guest name field helpers ───────────────────────────────────────────────
-
     private fun addGuestNameField(container: LinearLayout, guestNumber: Int) {
         val inflater = LayoutInflater.from(this)
         val til = inflater.inflate(
@@ -363,19 +347,14 @@ class HotelDetailActivity : AppCompatActivity() {
         tvGuestCount.text = guestCount.toString()
     }
 
-    // ── Hotel resolution ───────────────────────────────────────────────────────
-
     private suspend fun resolveHotel(hotelId: Int): Hotel? {
         return if (HotelRepository.isCustomId(hotelId)) {
-            // Use the class-level firestoreId for a direct lookup
             CustomHotelRepository.getHotelById(firestoreId)
                 ?.let { with(HotelRepository) { it.toHotel(hotelId) } }
         } else {
             HotelRepository.getStaticHotels(this).find { it.id == hotelId }
         }
     }
-
-    // ── Map ────────────────────────────────────────────────────────────────────
 
     private fun setupMap(lat: Double, lon: Double, name: String) {
         try {
@@ -394,43 +373,6 @@ class HotelDetailActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.error_map_load), Toast.LENGTH_SHORT).show()
         }
     }
-
-    // ── Notification ───────────────────────────────────────────────────────────
-
-    private fun sendNotification(hotelName: String, nights: Long, price: Double) {
-        try {
-            val channelId = "hotel_notifications"
-            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                nm.createNotificationChannel(
-                    NotificationChannel(channelId,
-                        getString(R.string.notif_channel_name),
-                        NotificationManager.IMPORTANCE_DEFAULT)
-                )
-            }
-            val total = nights * price
-            val builder = NotificationCompat.Builder(this, channelId)
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentTitle(getString(R.string.notif_title))
-                .setContentText(getString(R.string.notif_text, hotelName, nights, total))
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setAutoCancel(true)
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
-                return
-            }
-            nm.notify(1, builder.build())
-        } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.error_notification),
-                Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // ── Permissions ────────────────────────────────────────────────────────────
 
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
