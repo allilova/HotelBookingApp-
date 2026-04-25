@@ -38,7 +38,7 @@ class HotelAdapter(
         val hotel = getItem(position)
         holder.tvName.text  = hotel.name
         holder.tvCity.text  = hotel.city
-        holder.tvPrice.text = "${hotel.price} лв. / нощ"
+        holder.tvPrice.text = "${hotel.price} €/ нощ"
         holder.rbRating.rating = hotel.rating
 
 

@@ -158,7 +158,7 @@ class MyHotelsAdapter(
         val h = list[position]
         holder.tvName.text  = h.name
         holder.tvCity.text  = h.city
-        holder.tvPrice.text = "${h.price} BGN / нощ"
+        holder.tvPrice.text = "${h.price} € / нощ"
         holder.btnDelete.setOnClickListener { onDelete(h) }
     }
 

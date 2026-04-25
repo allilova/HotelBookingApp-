@@ -15,7 +15,7 @@
     <string name="vip_toast">You are a VIP client! 15%% discount!</string>
     <string name="cd_toggle_theme">Toggle theme</string>
 
-    <string name="price_per_night">%.2f BGN / night</string>
+    <string name="price_per_night">%.2f € / night</string>
     <string name="available">✓ Available</string>
     <string name="unavailable">✗ Unavailable</string>
     <string name="pick_dates">Choose dates</string>
@@ -36,7 +36,7 @@
 
     <string name="title_bookings">Booking history</string>
     <string name="no_bookings">You have no bookings yet.</string>
-    <string name="nights_total" formatted="false">%1$d night(s) — %2$.2f BGN</string>
+    <string name="nights_total" formatted="false">%1$d night(s) — %2$.2f €</string>
     <string name="booked_at">Booked: %s</string>
 
     <string name="notif_channel_name">Booking Notifications</string>

@@ -100,7 +100,7 @@
                     android:layout_marginTop="12dp"
                     android:hint="@string/hint_hotel_price"
                     app:startIconDrawable="@android:drawable/ic_menu_today"
-                    app:suffixText="BGN">
+                    app:suffixText="EUR">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etHotelPrice"

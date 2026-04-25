@@ -15,7 +15,7 @@
     <string name="vip_toast">Ти си VIP клиент! 15%% отстъпка!</string>
     <string name="cd_toggle_theme">Превключи тема</string>
 
-    <string name="price_per_night">%.2f лв. / нощ</string>
+    <string name="price_per_night">%.2f € / нощ</string>
     <string name="available">✓ Свободен</string>
     <string name="unavailable">✗ Зает</string>
     <string name="pick_dates">Избери дати</string>
@@ -36,7 +36,7 @@
 
     <string name="title_bookings">История на резервации</string>
     <string name="no_bookings">Нямате направени резервации.</string>
-    <string name="nights_total" formatted="false">%1$d нощ/и — %2$.2f лв.</string>
+   <string name="nights_total" formatted="false">%1$d нощ/и — %2$.2f €</string>
     <string name="booked_at">Резервирано: %s</string>
 
     <string name="notif_channel_name">Booking Notifications</string>
