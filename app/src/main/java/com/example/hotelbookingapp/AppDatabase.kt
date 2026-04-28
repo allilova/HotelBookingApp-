@@ -5,26 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-/**
- * Room database — after Phase 4 this only contains:
- *  - FavoriteHotel  (stays local — personal device preference, no sync needed)
- *
- * All other entities have been moved to Firestore:
- *  - User        → Firestore users/{uid}         (Phase 2)
- *  - Booking     → Firestore bookings/{id}        (Phase 3)
- *  - CustomHotel → Firestore hotels/{id}          (Phase 4)
- *
- * Version history:
- *  1 → 2:  Added imageUrl to favorite_hotels
- *  2 → 3:  Added bookings table
- *  3 → 4:  Added users table
- *  4 → 5:  Added hotelId to favorite_hotels and bookings
- *  5 → 6:  Added role column to users
- *  6 → 7:  Added custom_hotels table
- *  7 → 8:  Dropped users table (moved to Firestore)
- *  8 → 9:  Dropped bookings table (moved to Firestore)
- *  9 → 10: Dropped custom_hotels table (moved to Firestore)
- */
+
 @Database(
     entities = [FavoriteHotel::class],
     version  = 10,
@@ -128,12 +109,6 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        /**
-         * Migration 9 → 10: Drop the local custom_hotels table.
-         * Custom hotels are now stored in Firestore collection "hotels"
-         * so they are visible to ALL users on ALL devices immediately
-         * after a host creates them.
-         */
         val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("DROP TABLE IF EXISTS custom_hotels")

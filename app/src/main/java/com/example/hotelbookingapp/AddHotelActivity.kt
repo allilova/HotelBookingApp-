@@ -70,7 +70,7 @@ class AddHotelActivity : AppCompatActivity() {
                     // ownerUserId is now a String (Firebase UID) instead of Int.
                     CustomHotelRepository.createHotel(
                         CustomHotel(
-                            ownerUserId = ownerUid,  // ← Firebase UID, not Room integer
+                            ownerUserId = ownerUid,
                             name        = name,
                             city        = city,
                             price       = price,

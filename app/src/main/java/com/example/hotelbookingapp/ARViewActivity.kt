@@ -36,11 +36,11 @@ class ARViewActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private var rotationSensor: Sensor? = null
 
-    // Latest rotation matrix from TYPE_ROTATION_VECTOR
+
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
 
-    // Hotel coordinates (set from Intent)
+
     private var hotelLat = 0.0
     private var hotelLon = 0.0
 
@@ -99,7 +99,7 @@ class ARViewActivity : AppCompatActivity(), SensorEventListener {
                 )
                 tvDistance.text = getString(R.string.distance_from_you, km)
 
-                // Bearing from user to hotel (0° = North, clockwise)
+
                 userBearingToHotel = bearingTo(
                     userLoc.latitude, userLoc.longitude, hotelLat, hotelLon
                 )
@@ -110,10 +110,10 @@ class ARViewActivity : AppCompatActivity(), SensorEventListener {
 
     // ── Compass ───────────────────────────────────────────────────────
 
-    /** Bearing from the device to the hotel in degrees (0–360, clockwise from North) */
+
     private var userBearingToHotel = 0f
 
-    /** Device heading in degrees (0–360, clockwise from North) */
+
     private var deviceHeading = 0f
 
     override fun onSensorChanged(event: SensorEvent) {
@@ -128,20 +128,16 @@ class ARViewActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
 
-    /**
-     * Rotates the arrow so it points from the device toward the hotel,
-     * compensating for the current device heading.
-     */
+
     private fun updateArrow() {
-        // Relative angle: how many degrees clockwise from "up on screen" is the hotel?
         val relative = (userBearingToHotel - deviceHeading + 360f) % 360f
         ivArrow.rotation = relative
 
-        // Human-readable cardinal direction
+
         tvBearing.text = getString(R.string.ar_bearing, cardinalDirection(relative))
     }
 
-    /** Returns compass bearing in degrees from (lat1,lon1) to (lat2,lon2) */
+
     private fun bearingTo(
         lat1: Double, lon1: Double,
         lat2: Double, lon2: Double
