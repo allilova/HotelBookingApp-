@@ -26,7 +26,7 @@ class LocationViewModel(app: Application) : AndroidViewModel(app) {
     private val fusedClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(app)
 
-    // Fallback plain LocationManager (used only if Fused is unavailable)
+
     private val locationManager =
         app.getSystemService(LocationManager::class.java)
 
@@ -47,20 +47,17 @@ class LocationViewModel(app: Application) : AndroidViewModel(app) {
 
     private var usingFused = false
 
-    /**
-     * Call from onStart() (after permission check).
-     * Tries FusedLocationProviderClient first; falls back to LocationManager.
-     */
+
     fun startTracking(context: android.content.Context) {
         if (!hasPermission(context)) return
 
         viewModelScope.launch {
             try {
-                // Emit last known immediately so UI doesn't wait for first fix
+
                 val last = fusedClient.lastLocation.await()
                 if (last != null) _location.value = last
 
-                // Request live updates every 5 s, high accuracy
+
                 val request = LocationRequest.Builder(
                     Priority.PRIORITY_HIGH_ACCURACY, 5_000L
                 )
@@ -73,7 +70,7 @@ class LocationViewModel(app: Application) : AndroidViewModel(app) {
                 usingFused = true
 
             } catch (e: Exception) {
-                // FusedClient not available (no Play Services) — use legacy
+
                 startLegacyTracking(context)
             }
         }
@@ -115,9 +112,7 @@ class LocationViewModel(app: Application) : AndroidViewModel(app) {
                     context, Manifest.permission.ACCESS_COARSE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
 
-    /**
-     * Haversine formula — returns distance in km, rounded to 1 decimal place.
-     */
+
     fun distanceKm(
         userLat: Double, userLon: Double,
         hotelLat: Double, hotelLon: Double

@@ -15,13 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * Adapter for the favorites list.
- *
- * Key fix: we track the coroutine Job per ViewHolder so we can cancel
- * it when the view is recycled. This prevents old coroutines from writing
- * to the wrong view after RecyclerView recycles it.
- */
+
 class FavoriteAdapter(
     private var list: List<FavoriteHotel>,
     private val activityContext: Context,
@@ -34,7 +28,7 @@ class FavoriteAdapter(
         val city:      TextView    = view.findViewById(R.id.favCity)
         val deleteBtn: ImageButton = view.findViewById(R.id.btnDeleteFav)
 
-        // Track the running coroutine so we can cancel it on recycle
+
         var resolveJob: Job? = null
     }
 
@@ -46,8 +40,7 @@ class FavoriteAdapter(
 
     override fun onViewRecycled(holder: ViewHolder) {
         super.onViewRecycled(holder)
-        // Cancel the running resolve coroutine so it doesn't write
-        // stale data to a recycled view
+
         holder.resolveJob?.cancel()
         holder.resolveJob = null
     }
@@ -55,25 +48,24 @@ class FavoriteAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val hotel = list[position]
 
-        // Cancel any previous job on this ViewHolder before starting a new one
+
         holder.resolveJob?.cancel()
 
-        // Set fallback values immediately so the item is never blank
+
         holder.name.text = hotel.name
         holder.city.text = hotel.city
 
-        // Resolve the hotel name in the current locale.
-        // For custom hotels this may hit Firestore, so we run on IO.
+
         holder.resolveJob = CoroutineScope(Dispatchers.Main).launch {
             try {
                 val resolved = withContext(Dispatchers.IO) {
                     HotelRepository.resolve(activityContext, hotel.hotelId, hotel.name)
                 }
-                // Only update if this ViewHolder still shows the same item
+
                 holder.name.text = resolved?.name ?: hotel.name
                 holder.city.text = resolved?.city ?: hotel.city
             } catch (e: Exception) {
-                // Keep the fallback values
+
             }
         }
 

@@ -17,13 +17,7 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 
-/**
- * Adapter for the guest's booking history list.
- *
- * Key fix: HotelRepository.resolve() is now a suspend function that
- * may hit Firestore. We call it inside a coroutine and set fallback
- * values immediately so the item is never blank while loading.
- */
+
 class BookingAdapter(
     private var list: List<Booking>,
     private val activityContext: Context,
@@ -54,10 +48,10 @@ class BookingAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val b = list[position]
 
-        // ── Set fallback values immediately so item is never blank ────────────
+
         holder.tvName.text = "${b.hotelName} — ${b.hotelCity}"
 
-        // ── Resolve hotel name in coroutine (may hit Firestore) ───────────────
+
         CoroutineScope(Dispatchers.Main).launch {
             try {
                 val resolved = withContext(Dispatchers.IO) {
@@ -66,7 +60,7 @@ class BookingAdapter(
                 holder.tvName.text =
                     "${resolved?.name ?: b.hotelName} — ${resolved?.city ?: b.hotelCity}"
             } catch (e: Exception) {
-                // Keep the fallback value already set above
+
             }
         }
 
@@ -129,9 +123,6 @@ class BookingAdapter(
         holder.tvStatus.background = bg
 
         // ── Cancel button ─────────────────────────────────────────────────────
-        // IMPORTANT: always set visibility explicitly — RecyclerView recycles
-        // views so a previously GONE button can reappear on a new item if we
-        // don't explicitly set it to VISIBLE here.
         val canCancel = status == BookingStatus.PENDING ||
                 status == BookingStatus.CONFIRMED
         holder.btnCancel.visibility = if (canCancel) View.VISIBLE else View.GONE

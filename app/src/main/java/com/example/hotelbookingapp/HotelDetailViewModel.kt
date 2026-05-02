@@ -36,10 +36,7 @@ class HotelDetailViewModel(app: Application) : AndroidViewModel(app) {
 
     // ── Favourite operations ──────────────────────────────────────────────────
 
-    /**
-     * Loads the favourite state for a hotel from Room.
-     * MUST run on Dispatchers.IO because Room is a blocking operation.
-     */
+
     fun loadFavouriteState(hotelId: Int) {
         viewModelScope.launch {
             when (val result = safeIoCall { db.hotelDao().getFavoriteById(hotelId) }) {
@@ -49,10 +46,6 @@ class HotelDetailViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /**
-     * Toggles the favourite state for a hotel in Room.
-     * MUST run on Dispatchers.IO because Room is a blocking operation.
-     */
     fun toggleFavourite(hotel: FavoriteHotel) {
         viewModelScope.launch {
             val op: suspend () -> Unit = if (_isFavourite.value) {
@@ -69,10 +62,6 @@ class HotelDetailViewModel(app: Application) : AndroidViewModel(app) {
 
     // ── Booking operation (Firestore) ─────────────────────────────────────────
 
-    /**
-     * Saves a new booking to Firestore via BookingRepository.
-     * Firestore handles its own threading so no dispatcher switch needed.
-     */
     fun saveBooking(booking: Booking) {
         viewModelScope.launch {
             when (val result = safeCall { BookingRepository.createBooking(booking) }) {
@@ -84,10 +73,7 @@ class HotelDetailViewModel(app: Application) : AndroidViewModel(app) {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    /**
-     * Runs a Room (blocking) operation on Dispatchers.IO.
-     * Always use this for any Room call.
-     */
+
     private suspend fun <T> safeIoCall(block: suspend () -> T): DbResult<T> {
         return try {
             val result = withContext(Dispatchers.IO) { block() }
@@ -100,10 +86,7 @@ class HotelDetailViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /**
-     * Runs a Firestore (non-blocking, handles own threading) operation.
-     * Use this for Firestore calls — no dispatcher switch needed.
-     */
+
     private suspend fun <T> safeCall(block: suspend () -> T): DbResult<T> {
         return try {
             DbResult.Success(block())

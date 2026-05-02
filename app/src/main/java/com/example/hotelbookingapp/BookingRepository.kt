@@ -9,14 +9,6 @@ object BookingRepository {
     private val bookingsCollection = firestore.collection("bookings")
 
     // ── Create ────────────────────────────────────────────────────────────────
-
-    /**
-     * Saves a new booking to Firestore.
-     *
-     * We first get a new document reference (which gives us the ID
-     * immediately), then write the booking WITH the correct firestoreId already
-     * set. This is atomic — no separate update() call needed.
-     */
     suspend fun createBooking(booking: Booking): Booking {
         val docRef = bookingsCollection.document()
         val savedBooking = booking.copy(firestoreId = docRef.id)
@@ -36,15 +28,6 @@ object BookingRepository {
     }
 
     // ── Read: Guest ───────────────────────────────────────────────────────────
-
-    /**
-     * Fetches all bookings for a guest.
-     *
-     * NOTE: We intentionally avoid orderBy("bookedAt") here because combining
-     * whereEqualTo + orderBy requires a Firestore composite index that may not
-     * exist in the project. We sort the results in-memory instead, which is
-     * functionally identical and works without any index configuration.
-     */
     suspend fun getBookingsForGuest(uid: String): List<Booking> {
         val snapshot = bookingsCollection
             .whereEqualTo("guestUserId", uid)
@@ -58,12 +41,6 @@ object BookingRepository {
 
     // ── Read: Host ────────────────────────────────────────────────────────────
 
-    /**
-     * Fetches all bookings for hotels owned by a host.
-     *
-     * Same reasoning as above — no orderBy to avoid composite index requirement.
-     * Sorted in-memory by bookedAt descending.
-     */
     suspend fun getBookingsForHost(uid: String): List<Booking> {
         val snapshot = bookingsCollection
             .whereEqualTo("hostUserId", uid)

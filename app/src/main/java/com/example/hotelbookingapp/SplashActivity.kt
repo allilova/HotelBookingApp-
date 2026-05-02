@@ -31,9 +31,7 @@ class SplashActivity : AppCompatActivity() {
         lifecycleScope.launch {
             delay(SPLASH_DELAY_MS)
 
-            // FirebaseAuth.currentUser is non-null if a user is already
-            // signed in (Firebase persists the session automatically).
-            // This replaces our old SharedPreferences "logged_in_user_id" check.
+
             val target = if (FirebaseAuthManager.isLoggedIn) {
                 MainActivity::class.java
             } else {

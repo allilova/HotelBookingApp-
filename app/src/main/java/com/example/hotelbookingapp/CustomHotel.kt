@@ -2,11 +2,10 @@ package com.example.hotelbookingapp
 
 
 data class CustomHotel(
-    // Firestore document ID — empty when creating, filled after Firestore generates it
+
     val firestoreId:  String  = "",
 
-    // Firebase UID of the host who created this hotel
-    // Changed from Int to String in Phase 4 (was a Room autoincrement ID before)
+
     val ownerUserId:  String  = "",
 
     val name:         String  = "",

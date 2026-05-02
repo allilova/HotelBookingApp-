@@ -40,30 +40,14 @@ class HotelListViewModel(private val app: Application) : AndroidViewModel(app) {
         triggerReload()
     }
 
-    /**
-     * Reloads the full hotel list from:
-     *  1. Static hotels (hardcoded in HotelRepository)
-     *  2. Custom hotels from Firestore (CustomHotelRepository)
-     *
-     * Must be called after a host adds or deletes a hotel so the
-     * main list reflects the change immediately.
-     *
-     * Runs on Dispatchers.IO because Firestore .get().await() is a
-     * network call that must not block the main thread.
-     */
     fun triggerReload() {
         viewModelScope.launch {
             try {
                 val hotels = withContext(Dispatchers.IO) {
-                    // HotelRepository.getAllHotels() is now a suspend function
-                    // that fetches Firestore custom hotels internally
                     HotelRepository.getAllHotels(resourceContext)
                 }
                 _allHotels.value = hotels
             } catch (e: Exception) {
-                // If Firestore is unavailable (no network), keep whatever
-                // hotels we already have. Static hotels always load because
-                // they come from string resources, not the network.
                 if (_allHotels.value.isEmpty()) {
                     _allHotels.value = HotelRepository.getStaticHotels(resourceContext)
                 }

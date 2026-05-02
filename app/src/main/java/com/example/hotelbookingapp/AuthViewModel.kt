@@ -20,52 +20,21 @@ sealed class AuthState {
     data class Error(val message: String) : AuthState()
 }
 
-/**
- * AuthViewModel manages the authentication UI state for LoginActivity
- * and RegisterActivity.
- *
- * All Firebase Auth calls go through FirebaseAuthManager which handles
- * the actual Firebase SDK interactions. AuthViewModel's job is to:
- *  1. Validate input before calling FirebaseAuthManager
- *  2. Translate Firebase exceptions into human-readable Bulgarian/English messages
- *  3. Expose StateFlow and SharedFlow for the UI to observe
- *
- * Key difference from the old version:
- *  - No more Room DB calls, no more SHA-256, no more SharedPreferences session
- *  - Firebase persists the session automatically across app restarts
- *  - isLoggedIn() now checks FirebaseAuth.currentUser instead of SharedPreferences
- */
 class AuthViewModel(app: Application) : AndroidViewModel(app) {
 
-    // All auth operations are delegated to FirebaseAuthManager
+
     private val authManager = FirebaseAuthManager
 
     // ── UI State ──────────────────────────────────────────────────────────────
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
-
-    // SharedFlow for one-shot error events (Toast messages).
-    // replay = 0 means a new observer won't receive old errors.
     private val _errorEvent = MutableSharedFlow<String>(replay = 0)
     val errorEvent: SharedFlow<String> = _errorEvent
 
     // ── Session checks ────────────────────────────────────────────────────────
 
-    /**
-     * Returns true if a Firebase user is currently signed in.
-     * FirebaseAuth persists the session to disk so this returns true
-     * even after the app is killed and restarted.
-     *
-     * Replaces: pref.getInt("logged_in_user_id", -1) != -1
-     */
     fun isLoggedIn(): Boolean = authManager.isLoggedIn
-
-    /**
-     * Checks if the current user is a HOST by reading their Firestore profile.
-     * This is a suspend function — call it from a coroutine or use
-     * the isHostResult StateFlow pattern if you need it in the UI.
-     */
     fun checkIsHost(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
@@ -77,20 +46,6 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // ── Registration ──────────────────────────────────────────────────────────
-
-    /**
-     * Validates registration input and then calls FirebaseAuthManager.register().
-     *
-     * Validation rules (same as before):
-     *  - All fields required
-     *  - Valid email format
-     *  - Password at least 6 characters (Firebase minimum)
-     *  - Passwords must match
-     *
-     * Firebase-specific errors caught:
-     *  - FirebaseAuthUserCollisionException: email already registered
-     *  - FirebaseAuthWeakPasswordException: password too weak
-     */
     fun register(
         fullName:        String,
         email:           String,
@@ -123,7 +78,6 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
                 _authState.value = AuthState.Success(user)
             } catch (e: Exception) {
                 _authState.value = AuthState.Idle
-                // Translate Firebase error codes to human-readable messages
                 val message = when (e) {
                     is FirebaseAuthUserCollisionException ->
                         "Имейлът вече е регистриран."
@@ -139,13 +93,6 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
 
     // ── Login ─────────────────────────────────────────────────────────────────
 
-    /**
-     * Validates login input and then calls FirebaseAuthManager.login().
-     *
-     * Firebase-specific errors caught:
-     *  - FirebaseAuthInvalidUserException: no account with this email
-     *  - FirebaseAuthInvalidCredentialsException: wrong password
-     */
     fun login(email: String, password: String) {
         if (email.isBlank() || password.isBlank()) {
             emitError("Въведи имейл и парола.")
@@ -174,22 +121,11 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
 
     // ── Logout ────────────────────────────────────────────────────────────────
 
-    /**
-     * Signs out the current user.
-     * FirebaseAuth clears the persisted session automatically.
-     */
     fun logout() {
         authManager.logout()
     }
 
     // ── User profile ──────────────────────────────────────────────────────────
-
-    /**
-     * Fetches the logged-in user's profile from Firestore asynchronously
-     * and delivers it via callback on the main thread.
-     *
-     * Used by UserProfileActivity to display name, email, role, points.
-     */
     fun getLoggedInUser(onResult: (User?) -> Unit) {
         viewModelScope.launch {
             try {
@@ -202,11 +138,6 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-
-    /**
-     * Emits an error event from a non-coroutine context.
-     * Uses launch because MutableSharedFlow.emit() is a suspend function.
-     */
     private fun emitError(message: String) {
         viewModelScope.launch { _errorEvent.emit(message) }
     }

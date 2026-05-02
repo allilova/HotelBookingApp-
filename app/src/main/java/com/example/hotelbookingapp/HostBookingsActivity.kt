@@ -11,10 +11,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.launch
 
-/**
- * HostBookingsActivity shows all bookings made for the currently logged-in
- * host's hotels.
- */
+
 class HostBookingsActivity : AppCompatActivity() {
 
     private lateinit var adapter: HostBookingAdapter
@@ -56,7 +53,7 @@ class HostBookingsActivity : AppCompatActivity() {
             return
         }
 
-        // Clear previous state while loading
+
         rv.visibility      = View.GONE
         tvEmpty.visibility = View.GONE
 

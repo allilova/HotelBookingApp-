@@ -41,13 +41,13 @@ class HotelDetailActivity : AppCompatActivity() {
     private var checkInMs: Long?  = null
     private var checkOutMs: Long? = null
 
-    // Guest count tracked here — kept in sync with + / - buttons
+
     private var guestCount = 1
 
-    // Dynamic list of TextInputEditText fields, one per guest name
+
     private val guestNameFields = mutableListOf<TextInputEditText>()
 
-    // Set from Intent in onCreate, used by resolveHotel()
+
     private var firestoreId = ""
 
     private companion object {
@@ -258,7 +258,7 @@ class HotelDetailActivity : AppCompatActivity() {
                     .coerceAtLeast(1)
                 val name = findViewById<TextView>(R.id.detailName).text.toString()
 
-                // Show local notification on this device confirming the booking
+
                 NotificationHelper.showLocalNotification(
                     context = this@HotelDetailActivity,
                     title   = getString(R.string.notif_title),

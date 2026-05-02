@@ -10,25 +10,7 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
-/**
- * NotificationHelper handles two types of notifications:
- *
- * 1. LOCAL notifications — shown immediately on THIS device using
- *    Android NotificationCompat. Used after booking confirmation, etc.
- *
- * 2. REMOTE notifications — written to Firestore so the RECIPIENT's
- *    device can read them in real time via a Firestore listener.
- *    This replaces the deprecated FCM Legacy HTTP API.
- *
- * Firestore structure for remote notifications:
- *   notifications/
- *     {auto-id}/
- *       recipientUid: String   ← Firebase UID of the person to notify
- *       title:        String
- *       body:         String
- *       createdAt:    Long     ← epoch millis
- *       read:         Boolean  ← false until the recipient reads it
- */
+
 object NotificationHelper {
 
     private val firestore = FirebaseFirestore.getInstance()
@@ -38,17 +20,7 @@ object NotificationHelper {
 
     // ── Remote notification (Firestore) ───────────────────────────────────────
 
-    /**
-     * Writes a notification document to Firestore for the recipient.
-     * The recipient's device reads this via a real-time Firestore listener
-     * in HotelBookingListenerService and shows it as a system notification.
-     *
-     * This is best-effort — if it fails, we log but never throw.
-     *
-     * @param recipientUid Firebase UID of the user to notify.
-     * @param title        Notification title.
-     * @param body         Notification body text.
-     */
+
     suspend fun sendRemoteNotification(
         recipientUid: String,
         title:        String,
@@ -74,14 +46,7 @@ object NotificationHelper {
 
     // ── Local notification (shown on THIS device immediately) ─────────────────
 
-    /**
-     * Shows a system notification on the current device immediately.
-     * Used for confirming the user's own action (e.g. after booking).
-     *
-     * @param context Android context.
-     * @param title   Notification title.
-     * @param body    Notification body text.
-     */
+
     fun showLocalNotification(context: Context, title: String, body: String) {
         try {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE)

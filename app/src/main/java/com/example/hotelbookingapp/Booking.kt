@@ -21,7 +21,7 @@ data class Booking(
 )
 
 enum class BookingStatus {
-    PENDING,    // Created by guest, waiting for host action
-    CONFIRMED,  // Host has confirmed the booking
-    CANCELLED   // Cancelled by either guest or host
+    PENDING,
+    CONFIRMED,
+    CANCELLED
 }

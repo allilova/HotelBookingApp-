@@ -55,10 +55,7 @@ class MyHotelsActivity : AppCompatActivity() {
         refreshData()
     }
 
-    /**
-     * Loads the current host's hotels from Firestore.
-     * Uses FirebaseAuthManager.currentUid to identify the host.
-     */
+
     private fun refreshData() {
         val uid = FirebaseAuthManager.currentUid
         if (uid == null) return
@@ -91,10 +88,7 @@ class MyHotelsActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Shows a confirmation dialog before deleting a hotel.
-     * If confirmed, deletes the hotel from Firestore by its firestoreId.
-     */
+
     private fun confirmDelete(hotel: CustomHotel) {
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.delete_hotel_confirm_title))
@@ -130,12 +124,6 @@ class MyHotelsActivity : AppCompatActivity() {
 }
 
 // ── Adapter ───────────────────────────────────────────────────────────────────
-
-/**
- * Adapter for the host's "My Hotels" list.
- * Shows hotel name, city, price, and a delete button.
- * Now works with CustomHotel from Firestore instead of Room.
- */
 class MyHotelsAdapter(
     private var list: List<CustomHotel>,
     private val onDelete: (CustomHotel) -> Unit
